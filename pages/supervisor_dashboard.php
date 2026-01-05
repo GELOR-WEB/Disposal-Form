@@ -7,9 +7,28 @@ error_reporting(E_ALL);
 
 require_once '../db/conn.php';
 
-// Security Check
-if (!isset($_SESSION['user_id']) || ($_SESSION['job_level'] !== 'Supervisor' && $_SESSION['job_level'] !== 'Team Leader')) {
-    header("Location: staff_entry.php");
+// 1. CHECK LOGIN
+if (!isset($_SESSION['username'])) {
+    header("Location: ../auth/login.php");
+    exit();
+}
+
+// 2. ROBUST SECURITY CHECK (The Fix)
+// Allows Admins, Managers, Supervisors, Leaders
+$my_role = strtolower($_SESSION['role'] ?? '');
+$my_job  = strtolower($_SESSION['job_level'] ?? '');
+$full_role_string = $my_role . ' ' . $my_job;
+
+$is_admin_level = (
+    strpos($full_role_string, 'admin') !== false || 
+    strpos($full_role_string, 'supervisor') !== false || 
+    strpos($full_role_string, 'manager') !== false || 
+    strpos($full_role_string, 'leader') !== false
+);
+
+if (!$is_admin_level) {
+    // If they don't have permission, send them to View Forms instead of Staff Entry
+    header("Location: view_forms.php");
     exit();
 }
 
@@ -18,10 +37,11 @@ $error_message = "";
 
 try {
     // Fetch forms using PDO
+    // Updated table names to match your system (dsp_forms / dsp_items)
     $sql = "SELECT df.id, df.full_name, df.created_date, df.department, df.status,
             COUNT(di.id) as item_count
-            FROM disposal_forms df
-            LEFT JOIN disposal_items di ON df.id = di.form_id
+            FROM dsp_forms df
+            LEFT JOIN dsp_items di ON df.id = di.form_id
             GROUP BY df.id, df.full_name, df.created_date, df.department, df.status
             ORDER BY df.created_date DESC";
 
@@ -45,6 +65,7 @@ try {
     <title>Supervisor Dashboard</title>
     <link rel="stylesheet" href="../styles/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -88,8 +109,8 @@ try {
                         <?php foreach($forms as $form): ?>
                         <tr class="hover:bg-pink-50/30 transition-colors">
                             <td class="p-5 font-mono text-sm text-pink-500 font-bold">#<?php echo $form['id']; ?></td>
-                            <td class="p-5 font-medium"><?php echo $form['full_name']; ?></td>
-                            <td class="p-5 text-gray-500"><?php echo $form['department']; ?></td>
+                            <td class="p-5 font-medium"><?php echo $_SESSION['fullname']; ?></td>
+                            <td class="p-5 text-gray-500"><?php echo $_SESSION['department']; ?></td>
                             <td class="p-5"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold"><?php echo $form['item_count']; ?> Items</span></td>
                             <td class="p-5">
                                 <?php 
@@ -146,7 +167,7 @@ try {
             alert('System Error: ' + e.message);
         }
     }
-    // Add this new function for rejection
+    
     async function rejectForm(id) {
         if(!confirm('Are you sure you want to REJECT this request?')) return;
         

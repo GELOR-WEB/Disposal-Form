@@ -1,67 +1,74 @@
 <?php
 session_start();
-// 1. FIX PATH: Go up one level
 require_once '../db/conn.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+// 1. CHECK LOGIN
+if (!isset($_SESSION['username'])) {
     header("Location: ../auth/login.php");
     exit();
 }
 
-// Verify user is supervisor
-if ($_SESSION['job_level'] !== 'Supervisor' && $_SESSION['job_level'] !== 'Team Leader') {
+// 2. ROBUST SECURITY CHECK
+$my_role = strtolower($_SESSION['role'] ?? '');
+$my_job  = strtolower($_SESSION['job_level'] ?? '');
+$full_role_string = $my_role . ' ' . $my_job;
+
+$is_admin_level = (
+    strpos($full_role_string, 'admin') !== false || 
+    strpos($full_role_string, 'supervisor') !== false || 
+    strpos($full_role_string, 'manager') !== false || 
+    strpos($full_role_string, 'leader') !== false
+);
+
+if (!$is_admin_level) {
     header("Location: staff_entry.php");
     exit();
 }
 
 // Initialize stats
 $stats = [
-    'total_disposal_forms' => 0,
-    'total_items_disposed' => 0,
-    'total_by_department' => [],
-    'items_by_code' => []
+    'today_count' => 0,
+    'total_items' => 0,
+    'total_depts' => 0,
+    'report_data' => []
 ];
 
 try {
-    // 2. FIX QUERIES: Convert sqlsrv_query to PDO
-    
-    // Total disposal forms
-    $sql = "SELECT COUNT(*) as total FROM disposal_forms WHERE status = 'Approved'";
+    // A. TOTAL DISPOSAL PER DAY (Today's Count)
+    // We check specifically for records created today
+    $sql = "SELECT COUNT(*) as total FROM dsp_forms 
+            WHERE CAST(created_date AS DATE) = CAST(GETDATE() AS DATE)";
     $stmt = $conn->query($sql);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $stats['total_disposal_forms'] = $row['total'];
+    $stats['today_count'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Total items disposed
+    // B. TOTAL DISPOSAL PER ITEM (Total Quantity of all items ever disposed)
+    // Only counting Approved forms to be accurate
     $sql = "SELECT SUM(di.quantity) as total 
-            FROM disposal_items di
-            JOIN disposal_forms df ON di.form_id = df.id
+            FROM dsp_items di
+            JOIN dsp_forms df ON di.form_id = df.id
             WHERE df.status = 'Approved'";
     $stmt = $conn->query($sql);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $stats['total_items_disposed'] = $row['total'] ?? 0;
+    $stats['total_items'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
-    // Total by department
-    $sql = "SELECT department, COUNT(*) as total
-            FROM disposal_forms
-            WHERE status = 'Approved'
-            GROUP BY department
-            ORDER BY total DESC";
+    // C. TOTAL DISPOSAL PER DEPT (Count of unique active departments)
+    $sql = "SELECT COUNT(DISTINCT department) as total FROM dsp_forms";
     $stmt = $conn->query($sql);
-    $stats['total_by_department'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stats['total_depts'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Items by code
-    $sql = "SELECT di.code, di.description, SUM(di.quantity) as total_quantity, COUNT(*) as disposal_count
-            FROM disposal_items di
-            JOIN disposal_forms df ON di.form_id = df.id
-            WHERE df.status = 'Approved'
-            GROUP BY di.code, di.description
-            ORDER BY total_quantity DESC";
+    // TABLE: DISPOSAL FORMS BY DEPARTMENT (PER DAY)
+    // Groups by Date AND Department so duplicates sum up
+    $sql = "SELECT 
+                CAST(created_date AS DATE) as report_date, 
+                department, 
+                COUNT(*) as total_forms
+            FROM dsp_forms
+            GROUP BY CAST(created_date AS DATE), department
+            ORDER BY report_date DESC, total_forms DESC";
     $stmt = $conn->query($sql);
-    $stats['items_by_code'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stats['report_data'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    echo "Database Error: " . $e->getMessage();
+    // echo "Error: " . $e->getMessage();
 }
 ?>
 <!DOCTYPE html>
@@ -69,6 +76,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Reports • La Rose Noire</title>
+    <link rel="icon" type="image/jpg" href="../assets/images/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -85,7 +93,6 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../styles/style.css">
     <style>
-        /* 4. FIX LAYOUT: Add padding for sidebar */
         body { 
             padding-left: 280px; 
             padding-top: 20px; 
@@ -107,66 +114,75 @@ try {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="card p-8 bg-white rounded-2xl shadow-lg">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-file-alt text-3xl text-white"></i>
-                    </div>
+            
+            <div class="card p-6 bg-white rounded-2xl shadow-lg border-l-4 border-pink-400">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-800"><?php echo $stats['total_disposal_forms']; ?></h3>
-                        <p class="text-sm text-gray-600 font-semibold">Total Disposal Forms</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Disposal Forms Today</p>
+                        <h3 class="text-4xl font-bold text-gray-800 mt-2"><?php echo $stats['today_count']; ?></h3>
+                        <p class="text-xs text-pink-500 mt-1 font-medium"><?php echo date('F j, Y'); ?></p>
+                    </div>
+                    <div class="p-4 bg-pink-50 rounded-2xl text-pink-500">
+                        <i class="fas fa-calendar-day text-2xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500">Approved forms only</p>
             </div>
 
-            <div class="card p-8 bg-white rounded-2xl shadow-lg">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-16 h-16 bg-blue-400 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-box-open text-3xl text-white"></i>
-                    </div>
+            <div class="card p-6 bg-white rounded-2xl shadow-lg border-l-4 border-blue-400">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-800"><?php echo number_format($stats['total_items_disposed']); ?></h3>
-                        <p class="text-sm text-gray-600 font-semibold">Total Items Disposed</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Items Disposed</p>
+                        <h3 class="text-4xl font-bold text-gray-800 mt-2"><?php echo number_format($stats['total_items']); ?></h3>
+                        <p class="text-xs text-blue-500 mt-1 font-medium">Accumulated Quantity</p>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-2xl text-blue-500">
+                        <i class="fas fa-cubes text-2xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500">All approved items</p>
             </div>
 
-            <div class="card p-8 bg-white rounded-2xl shadow-lg">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-16 h-16 bg-teal-400 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-building text-3xl text-white"></i>
-                    </div>
+            <div class="card p-6 bg-white rounded-2xl shadow-lg border-l-4 border-purple-400">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-800"><?php echo count($stats['total_by_department']); ?></h3>
-                        <p class="text-sm text-gray-600 font-semibold">Active Departments</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Departments</p>
+                        <h3 class="text-4xl font-bold text-gray-800 mt-2"><?php echo $stats['total_depts']; ?></h3>
+                        <p class="text-xs text-purple-500 mt-1 font-medium">With Submission Records</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-2xl text-purple-500">
+                        <i class="fas fa-building text-2xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500">With disposal forms</p>
             </div>
         </div>
 
         <div class="bg-white/80 p-6 mb-8 rounded-2xl shadow border border-white/50 backdrop-blur-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">Disposal Forms by Department</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Disposal Forms by Department (Daily Breakdown)</h2>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-gray-200">
-                            <th class="text-left py-3 px-4">Department</th>
-                            <th class="text-right py-3 px-4">Total Forms</th>
+                            <th class="text-left py-4 px-4 text-xs font-bold text-gray-500 uppercase">Date</th>
+                            <th class="text-left py-4 px-4 text-xs font-bold text-gray-500 uppercase">Department</th>
+                            <th class="text-right py-4 px-4 text-xs font-bold text-gray-500 uppercase">Total Forms</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($stats['total_by_department'])): ?>
-                            <tr><td colspan="2" class="text-center py-8 text-gray-500">No data available</td></tr>
+                        <?php if (empty($stats['report_data'])): ?>
+                            <tr><td colspan="3" class="text-center py-8 text-gray-400">No records found.</td></tr>
                         <?php else: ?>
-                            <?php foreach ($stats['total_by_department'] as $dept): ?>
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-3 px-4 font-semibold"><?php echo htmlspecialchars($dept['department']); ?></td>
-                                    <td class="py-3 px-4 text-right">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-pink-100 text-pink-600">
-                                            <?php echo $dept['total']; ?>
+                            <?php foreach ($stats['report_data'] as $row): ?>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4 font-mono text-sm text-gray-600">
+                                        <?php echo date('M j, Y', strtotime($row['report_date'])); ?>
+                                    </td>
+                                    
+                                    <td class="py-4 px-4 font-semibold text-gray-700">
+                                        <?php echo htmlspecialchars($_SESSION['department']); ?>
+                                    </td>
+                                    
+                                    <td class="py-4 px-4 text-right">
+                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold bg-pink-100 text-pink-600 shadow-sm">
+                                            <?php echo $row['total_forms']; ?>
                                         </span>
                                     </td>
                                 </tr>
@@ -180,7 +196,6 @@ try {
 
     <script>
         function exportReports() {
-            // Updated path to API
             window.location.href = '../api/export_reports.php';
         }
     </script>

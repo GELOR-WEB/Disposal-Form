@@ -14,7 +14,7 @@ try {
     require_once '../db/conn.php';
 
     // 3. Validation
-    if (!isset($_SESSION['user_id'])) {
+    if (!isset($_SESSION['username'])) {
         throw new Exception("User not logged in.");
     }
 
@@ -34,7 +34,7 @@ try {
     // =========================================================
     // FIX IS HERE: Use OUTPUT INSERTED.id for SQL Server
     // =========================================================
-    $sqlHeader = "INSERT INTO disposal_forms (user_id, full_name, department, status, created_date) 
+    $sqlHeader = "INSERT INTO dsp_forms (user_id, full_name, department, status, created_date) 
                   OUTPUT INSERTED.id 
                   VALUES (?, ?, ?, 'Pending', GETDATE())";
     
@@ -57,7 +57,7 @@ try {
     $form_id = $row['id'];
 
     // 5. Insert Items
-    $sqlItem = "INSERT INTO disposal_items 
+    $sqlItem = "INSERT INTO dsp_items 
                 (form_id, code, description, serial_no, unit_of_measure, quantity, reason_for_disposal, attachment_pictures) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmtItem = $conn->prepare($sqlItem);

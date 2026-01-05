@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['username'])) {
     header("Location: ../auth/login.php");
     exit();
 }
@@ -15,7 +15,7 @@ $form_id = $_GET['id'];
 
 try {
     // 2. Fetch Form Header Info
-    $sqlHeader = "SELECT * FROM disposal_forms WHERE id = ?";
+    $sqlHeader = "SELECT * FROM dsp_forms WHERE id = ?";
     $stmt = $conn->prepare($sqlHeader);
     $stmt->execute([$form_id]);
     $form = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -25,7 +25,7 @@ try {
     }
 
     // 3. Fetch Items belonging to this form
-    $sqlItems = "SELECT * FROM disposal_items WHERE form_id = ?";
+    $sqlItems = "SELECT * FROM dsp_items WHERE form_id = ?";
     $stmtItems = $conn->prepare($sqlItems);
     $stmtItems->execute([$form_id]);
     $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
@@ -39,6 +39,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Form #<?php echo $form_id; ?> Details</title>
+    <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -94,15 +95,15 @@ try {
             <div class="grid grid-cols-3 gap-8 border-t border-gray-100 pt-6">
                 <div class="info-group">
                     <label>Requested By</label>
-                    <div><?php echo htmlspecialchars($form['full_name']); ?></div>
+                    <div><?php echo htmlspecialchars($_SESSION['fullname']); ?></div>
                 </div>
                 <div class="info-group">
                     <label>Department</label>
-                    <div><?php echo htmlspecialchars($form['department']); ?></div>
+                    <div><?php echo htmlspecialchars($_SESSION['department']); ?></div>
                 </div>
                 <div class="info-group">
                     <label>Approved By</label>
-                    <div><?php echo $form['approved_by'] ? 'Supervisor ID: ' . $form['approved_by'] : '-'; ?></div>
+                    <div><?php echo $_SESSION['approved_by'] ? 'Supervisor ID: ' . $form['approved_by'] : '-'; ?></div>
                 </div>
             </div>
         </div>

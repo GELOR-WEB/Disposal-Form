@@ -4,7 +4,7 @@ session_start();
 require_once '../db/conn.php';
 
 // 1. Security Check
-if (!isset($_SESSION['user_id']) || ($_SESSION['job_level'] !== 'Supervisor' && $_SESSION['job_level'] !== 'Team Leader')) {
+if (!isset($_SESSION['username']) || ($_SESSION['job_level'] !== 'Supervisor' && $_SESSION['job_level'] !== 'Team Leader')) {
     die("Access Denied");
 }
 

@@ -1,13 +1,13 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../auth/login.php");
+if (!isset($_SESSION['username'])) {
+    header("Location: ../login.php");
     exit();
 }
 require_once '../db/conn.php';
 
 // 1. UPDATED QUERY: Uses the correct table 'disposal_forms'
-$sql = "SELECT * FROM disposal_forms ORDER BY created_date DESC";
+$sql = "SELECT * FROM dsp_forms ORDER BY created_date DESC";
 $stmt = $conn->query($sql);
 $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -36,6 +36,7 @@ $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="../styles/style.css">
     <style>
         /* 3. UPDATED: Adjusted padding to match dashboard */
@@ -88,14 +89,14 @@ $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php echo date('M d, Y h:i A', strtotime($form['created_date'])); ?>
                                     </td>
                                     <td class="py-4 px-4 text-gray-800 font-medium text-sm">
-                                        <?php echo $form['department']; ?>
+                                        <?php echo $_SESSION['department']; ?>
                                     </td>
                                     <td class="py-4 px-4">
                                         <div class="flex items-center gap-2">
                                             <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
                                                 <i class="fas fa-user"></i>
                                             </div>
-                                            <span class="text-sm font-medium text-gray-700"><?php echo $form['full_name']; ?></span>
+                                            <span class="text-sm font-medium text-gray-700"><?php echo $_SESSION['fullname']; ?></span>
                                         </div>
                                     </td>
                                     <td class="py-4 px-4">

@@ -4,31 +4,43 @@ header('Content-Type: application/json');
 session_start();
 require_once '../db/conn.php';
 
-// Get JSON Input
 $data = json_decode(file_get_contents("php://input"), true);
 
-// 1. Security Check
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['job_level'], ['Supervisor', 'Team Leader'])) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+// 1. ROBUST SECURITY CHECK
+$my_role = strtolower($_SESSION['role'] ?? '');
+$my_job  = strtolower($_SESSION['job_level'] ?? '');
+$full_role_string = $my_role . ' ' . $my_job;
+
+$is_admin_level = (
+    strpos($full_role_string, 'admin') !== false || 
+    strpos($full_role_string, 'supervisor') !== false || 
+    strpos($full_role_string, 'manager') !== false || 
+    strpos($full_role_string, 'leader') !== false
+);
+
+// Determine the Approver ID (Use user_id if set, otherwise username)
+$approver_id = $_SESSION['user_id'] ?? $_SESSION['username'] ?? null;
+
+if (!$approver_id || !$is_admin_level) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized or Missing ID. Please Logout and Login again.']);
     exit();
 }
 
-// 2. Validate Input
+// 2. Execute Update
 if (isset($data['form_ids']) && is_array($data['form_ids'])) {
     try {
-        // 3. Prepare SQL with Correct Table & Column Names
         $placeholders = str_repeat('?,', count($data['form_ids']) - 1) . '?';
         
-        $sql = "UPDATE disposal_forms 
+        $sql = "UPDATE dsp_forms 
                 SET status = 'Approved', 
-                    approved_by = ?,       -- Uses User ID (Int)
+                    approved_by = ?, 
                     approved_date = GETDATE() 
                 WHERE id IN ($placeholders)";
         
         $stmt = $conn->prepare($sql);
         
-        // Combine User ID with the list of Form IDs
-        $params = array_merge([$_SESSION['user_id']], $data['form_ids']);
+        // Use the safe approver_id
+        $params = array_merge([$approver_id], $data['form_ids']);
         $stmt->execute($params);
 
         echo json_encode(['success' => true]);
