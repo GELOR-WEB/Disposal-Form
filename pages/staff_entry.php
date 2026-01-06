@@ -8,6 +8,12 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+if ($_SESSION['role'] === 'Invalid') {
+    // If role is invalid, log out the user
+    header("Location: ../auth/logout.php");
+    exit();
+}
+
 // 2. SECURITY: Kick out Admins
 $job = strtolower($_SESSION['job_level'] ?? '');
 $is_supervisor = (strpos($job, 'supervisor') !== false ||
@@ -20,7 +26,24 @@ if ($is_supervisor) {
 }
 
 require_once '../db/conn.php';
-$display_control_no = "NEW-" . date('Ymd');
+// --- AUTO-GENERATE NEXT CONTROL NO ---
+try {
+    // 1. Get the highest ID currently in the database
+    $sql_last = "SELECT MAX(id) as last_id FROM dsp_forms";
+    $stmt_last = $conn->query($sql_last);
+    $row_last = $stmt_last->fetch(PDO::FETCH_ASSOC);
+    
+    // 2. Calculate the next ID (if DB is empty, start at 1)
+    $next_id = ($row_last['last_id'] ?? 0) + 1;
+    
+    // 3. Format it: "CN-" + Year + "-000X" (e.g., CN-2026-0006)
+    $display_control_no = "CN-" . date('Y') . "-" . str_pad($next_id, 4, '0', STR_PAD_LEFT);
+
+} catch (Exception $e) {
+    // Fallback if DB fails (prevents page crash)
+    $display_control_no = "TMP-" . date('YmdHis');
+}
+// -------------------------------------
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,7 +157,7 @@ $display_control_no = "NEW-" . date('Ymd');
                 <div class="header-info-box">
                     <div>
                         <div class="info-label">Created By</div>
-                        <div class="info-value"><?php echo $_SESSION['full_name'] ?? 'User'; ?></div>
+                        <div class="info-value"><?php echo $_SESSION['fullname'] ?? 'User'; ?></div>
                     </div>
                     <div>
                         <div class="info-label">Date</div>
@@ -142,7 +165,7 @@ $display_control_no = "NEW-" . date('Ymd');
                     </div>
                     <div>
                         <div class="info-label">Department</div>
-                        <div class="info-value"><?php echo $_SESSION['dept'] ?? 'Dept'; ?></div>
+                        <div class="info-value"><?php echo $_SESSION['department'] ?? 'Dept'; ?></div>
                     </div>
                     <div>
                         <div class="info-label">Control No.</div>
@@ -259,7 +282,8 @@ $display_control_no = "NEW-" . date('Ymd');
                         </div>
                         <div class="form-group">
                             <label>Quantity</label>
-                            <input type="number" id="m_qty" class="form-input" min="1" required>
+                            <input type="number" id="m_qty" class="form-input" min="1" required 
+                            onkeydown="if(event.key==='-' || event.key==='e') event.preventDefault()">
                         </div>
                     </div>
                     <div class="form-group">

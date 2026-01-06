@@ -3,9 +3,21 @@
 session_start();
 require_once '../db/conn.php';
 
-// 1. Security Check
-if (!isset($_SESSION['username']) || ($_SESSION['job_level'] !== 'Supervisor' && $_SESSION['job_level'] !== 'Team Leader')) {
-    die("Access Denied");
+// 1. ROBUST SECURITY CHECK
+// We use the same "Admin Detection" logic as the rest of your app
+$my_role = strtolower($_SESSION['role'] ?? '');
+$my_job  = strtolower($_SESSION['job_level'] ?? '');
+$full_role_string = $my_role . ' ' . $my_job;
+
+$is_admin_level = (
+    strpos($full_role_string, 'admin') !== false || 
+    strpos($full_role_string, 'supervisor') !== false || 
+    strpos($full_role_string, 'manager') !== false || 
+    strpos($full_role_string, 'leader') !== false
+);
+
+if (!isset($_SESSION['username']) || !$is_admin_level) {
+    die("Access Denied: You do not have permission to export reports.");
 }
 
 // 2. Set Headers to force download as Excel (.xls)
@@ -18,8 +30,8 @@ header("Expires: 0");
 echo "Control No.\tDate Created\tDepartment\tCreated By\tItem Code\tDescription\tQty\tUOM\tStatus\tApproved By\n";
 
 try {
-    // 4. Fetch Data using PDO (The Fix)
-    // We join the Forms table with the Items table to get a complete list
+    // 4. Fetch Data using PDO (Updated Table Names)
+    // Changed 'disposal_forms' -> 'dsp_forms' and 'disposal_items' -> 'dsp_items'
     $sql = "SELECT 
                 df.id as control_no,
                 df.created_date,
@@ -31,8 +43,8 @@ try {
                 di.unit_of_measure,
                 df.status,
                 df.approved_by
-            FROM disposal_forms df
-            JOIN disposal_items di ON df.id = di.form_id
+            FROM dsp_forms df
+            JOIN dsp_items di ON df.id = di.form_id
             WHERE df.status = 'Approved'
             ORDER BY df.created_date DESC";
 
@@ -47,10 +59,14 @@ try {
             $desc = str_replace(["\t", "\n"], " ", $row['description']);
             $date = date('Y-m-d H:i', strtotime($row['created_date']));
             
-            echo "{$row['control_no']}\t{$date}\t{$row['department']}\t{$row['created_by']}\t{$row['code']}\t{$desc}\t{$row['quantity']}\t{$row['unit_of_measure']}\t{$row['status']}\t{$row['approved_by']}\n";
+            // Handle potentially missing approved_by
+            $approver = $row['approved_by'] ?? 'System';
+
+            echo "{$row['control_no']}\t{$date}\t{$row['department']}\t{$row['created_by']}\t{$row['code']}\t{$desc}\t{$row['quantity']}\t{$row['unit_of_measure']}\t{$row['status']}\t{$approver}\n";
         }
     } else {
-        echo "No approved disposal records found.\n";
+        // Output nothing (or a message) if no rows, but usually blank is better for excel parsing
+        // echo "No approved disposal records found.\n";
     }
 
 } catch (PDOException $e) {

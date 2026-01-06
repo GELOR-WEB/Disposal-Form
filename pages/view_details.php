@@ -6,7 +6,7 @@ if (!isset($_SESSION['username'])) {
 }
 require_once '../db/conn.php';
 
-// 1. Get the ID from the URL (e.g., view_details.php?id=1)
+// 1. Get the ID from the URL
 if (!isset($_GET['id'])) {
     header("Location: view_forms.php");
     exit();
@@ -14,8 +14,11 @@ if (!isset($_GET['id'])) {
 $form_id = $_GET['id'];
 
 try {
-    // 2. Fetch Form Header Info
+    // 2. FETCH FORM DETAILS (SAFE VERSION)
+    // I removed the subquery to 'LRNPH_E' to fix the permission error.
+    // Now it just pulls the data from your local table.
     $sqlHeader = "SELECT * FROM dsp_forms WHERE id = ?";
+                  
     $stmt = $conn->prepare($sqlHeader);
     $stmt->execute([$form_id]);
     $form = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -24,7 +27,7 @@ try {
         die("Form not found.");
     }
 
-    // 3. Fetch Items belonging to this form
+    // 3. Fetch Items
     $sqlItems = "SELECT * FROM dsp_items WHERE form_id = ?";
     $stmtItems = $conn->prepare($sqlItems);
     $stmtItems->execute([$form_id]);
@@ -39,7 +42,6 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Form #<?php echo $form_id; ?> Details</title>
-    <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -55,6 +57,7 @@ try {
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/jpeg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="../styles/style.css">
     <style>
         body { padding-left: 280px; padding-top: 20px; padding-right: 20px; }
@@ -72,8 +75,8 @@ try {
 
     <div class="animate-fade-in max-w-5xl mx-auto">
         
-        <a href="view_forms.php" class="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 mb-6 transition-colors font-medium">
-            <i class="fas fa-arrow-left"></i> Back to List
+        <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 mb-6 transition-colors font-medium">
+            <i class="fas fa-arrow-left"></i> Back
         </a>
 
         <div class="glass-panel p-8 mb-8 rounded-2xl relative overflow-hidden">
@@ -95,15 +98,38 @@ try {
             <div class="grid grid-cols-3 gap-8 border-t border-gray-100 pt-6">
                 <div class="info-group">
                     <label>Requested By</label>
-                    <div><?php echo htmlspecialchars($_SESSION['fullname']); ?></div>
+                    <div><?php echo htmlspecialchars($form['full_name']); ?></div>
                 </div>
                 <div class="info-group">
                     <label>Department</label>
-                    <div><?php echo htmlspecialchars($_SESSION['department']); ?></div>
+                    <div><?php echo htmlspecialchars($form['department']); ?></div>
                 </div>
+                
                 <div class="info-group">
-                    <label>Approved By</label>
-                    <div><?php echo $_SESSION['approved_by'] ? 'Supervisor ID: ' . $form['approved_by'] : '-'; ?></div>
+                    <label>Status Check</label>
+                    <div>
+                       <?php if ($form['status'] === 'Pending'): ?>
+                            <span class="text-yellow-600 italic">To be checked</span>
+                        
+                        <?php elseif ($form['status'] === 'Rejected'): ?>
+                            <div class="flex flex-col">
+                                <span class="text-red-600 font-semibold">Rejected by: <?php echo htmlspecialchars($_SESSION['fullname'] ?? 'Unknown'); ?></span>
+                                <span class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <?php echo date('M j, Y • g:i A', strtotime($form['approved_date'])); ?>
+                                </span>
+                            </div>
+                        
+                        <?php else: ?>
+                            <div class="flex flex-col">
+                                <span class="text-green-600 font-semibold">Approved by: <?php echo htmlspecialchars($_SESSION['fullname'] ?? 'Unknown'); ?></span>
+                                <span class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <?php echo date('M j, Y • g:i A', strtotime($form['approved_date'])); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -136,9 +162,9 @@ try {
                                     <?php echo $item['quantity'] . ' ' . $item['unit_of_measure']; ?>
                                 </span>
                             </td>
-                            <td class="py-4 italic text-gray-500">"<?php echo htmlspecialchars($item['reason_for_disposal']); ?>"</td>
+                            <td class="py-4 italic text-gray-500">"<?php echo htmlspecialchars($item['reason']); ?>"</td>
                             <td class="py-4">
-                                <?php if ($item['attachment_pictures'] && $item['attachment_pictures'] !== 'No Image'): ?>
+                                <?php if (!empty($item['attachment_pictures']) && $item['attachment_pictures'] !== 'No Image'): ?>
                                     <a href="../uploads/<?php echo $item['attachment_pictures']; ?>" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">
                                         <i class="fas fa-paperclip"></i> View Image
                                     </a>

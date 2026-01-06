@@ -78,6 +78,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['empcode'] = $row['empcode'];
                 $_SESSION['department'] = $row['Department'];
 
+                // FOR DEBUGGING ----
+                if ($username === '40970'){
+                    $_SESSION['role'] = 'Employee';
+                    header("Location: ../pages/dashboard.php");
+                    exit();
+                }
+                elseif ($username === '40021'){
+                    $_SESSION['role'] = 'Admin';
+                    header("Location: ../pages/view_forms.php");
+                    exit();
+                }
+                elseif ($username === '40235'){
+                    $_SESSION['role'] = 'Department Head';
+                    header("Location: ../pages/view_forms.php");
+                    exit();
+                }
+                elseif ($username === '2604'){
+                    $_SESSION['role'] = 'Executive';
+                    header("Location: ../pages/view_forms.php");
+                    exit();
+                }
+                else{
+                    // Default role
+                    $_SESSION['role'] = 'Invalid';
+                }
+                // ----------
                 header("Location: ../pages/dashboard.php");
                 exit();
  

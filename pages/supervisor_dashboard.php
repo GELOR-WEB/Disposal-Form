@@ -23,7 +23,9 @@ $is_admin_level = (
     strpos($full_role_string, 'admin') !== false || 
     strpos($full_role_string, 'supervisor') !== false || 
     strpos($full_role_string, 'manager') !== false || 
-    strpos($full_role_string, 'leader') !== false
+    strpos($full_role_string, 'leader') !== false ||
+    $my_role === 'executive' ||
+    $my_role === 'department head'
 );
 
 if (!$is_admin_level) {

@@ -31,22 +31,21 @@ try {
     // 4. Start Transaction
     $conn->beginTransaction();
 
-    // =========================================================
-    // FIX IS HERE: Use OUTPUT INSERTED.id for SQL Server
-    // =========================================================
-    $sqlHeader = "INSERT INTO dsp_forms (user_id, full_name, department, status, created_date) 
-                  OUTPUT INSERTED.id 
-                  VALUES (?, ?, ?, 'Pending', GETDATE())";
+    $sql = "INSERT INTO dsp_forms (full_name, department, created_date, status) 
+            OUTPUT INSERTED.id 
+            VALUES (?, ?, GETDATE(), 'Pending')";
     
-    $stmt = $conn->prepare($sqlHeader);
-    $stmt->execute([
-        $_SESSION['user_id'],
-        $_SESSION['full_name'],
-        $_SESSION['dept']
-    ]);
+    $stmt = $conn->prepare($sql);
     
-    // Fetch the ID directly from the INSERT command results
+    // Clean inputs (Defensive code from before)
+    $nameToSave = $full_name ?? $_SESSION['fullname'] ?? 'Unknown User';
+    $deptToSave = $department ?? $_SESSION['department'] ?? 'Unknown Dept';
+    
+    $stmt->execute([$nameToSave, $deptToSave]);
+    
+    // Now we can just 'fetch' the ID like a normal row
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $form_id = $row['id']; // Success! We have the ID.
     
     if (!$row || !isset($row['id'])) {
         // If this fails, we throw the actual database error to help debug
@@ -57,10 +56,20 @@ try {
     $form_id = $row['id'];
 
     // 5. Insert Items
-    $sqlItem = "INSERT INTO dsp_items 
-                (form_id, code, description, serial_no, unit_of_measure, quantity, reason_for_disposal, attachment_pictures) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmtItem = $conn->prepare($sqlItem);
+    if (!isset($_POST['items_data'])) {
+        throw new Exception("No items found in the submission.");
+    }
+
+    $items = json_decode($_POST['items_data'], true);
+    if (!$items) {
+        throw new Exception("Item data is invalid.");
+    }
+
+    // FIX: Changed 'reason_for_disposal' to 'reason' to match your Database
+    $sql_item = "INSERT INTO dsp_items (form_id, code, description, serial_no, unit_of_measure, quantity, reason, image_path) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                 
+    $stmt_item = $conn->prepare($sql_item);
 
     foreach ($items as $item) {
         // Handle File Upload
@@ -80,14 +89,14 @@ try {
         }
 
         // Insert Item Row
-        $stmtItem->execute([
+        $stmt_item->execute([
             $form_id,
-            $item['code'],
-            $item['desc'],
-            $item['serial'],
-            $item['uom'],
-            $item['qty'],
-            $item['reason'],
+            $item['code'] ?? '',
+            $item['desc'] ?? 'No Description',
+            $item['serial'] ?? '',
+            $item['uom'] ?? 'PCS',
+            $item['qty'] ?? 0,
+            $item['reason'] ?? '', // This maps to the 'reason' column above
             $fileName
         ]);
     }

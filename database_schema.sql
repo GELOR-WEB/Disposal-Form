@@ -1,69 +1,52 @@
--- 1. Create Database (if not exists)
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'GMP')
+-- 1. Create/Use the Database
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'LRNPH_OJT')
 BEGIN
-    CREATE DATABASE GMP;
+    CREATE DATABASE LRNPH_OJT;
 END
 GO
 
-USE GMP;
+USE LRNPH_OJT;
 GO
 
--- 2. Create the Forms Table (Fixes "Invalid object name 'disposal_forms'")
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[disposal_forms]') AND type in (N'U'))
+-- 2. Create the FORMS Table 
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[dsp_forms]') AND type in (N'U'))
 BEGIN
-    CREATE TABLE disposal_forms (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        user_id INT,
-        full_name NVARCHAR(100),
+    CREATE TABLE dsp_forms (
+        id INT IDENTITY(1,1) PRIMARY KEY, -- This creates your Control No (1, 2, 3...)
+        full_name NVARCHAR(100),          -- Stores the creator's name
         department NVARCHAR(100),
         created_date DATETIME DEFAULT GETDATE(),
         status NVARCHAR(50) DEFAULT 'Pending',
-        approved_by INT NULL,
+        approved_by NVARCHAR(50) NULL,    -- Changed to NVARCHAR to store ID or EmpCode
         approved_date DATETIME NULL
     );
 END
+GO
 
--- 3. Create the Items Table
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[disposal_items]') AND type in (N'U'))
+-- 3. Create the ITEMS Table 
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[dsp_items]') AND type in (N'U'))
 BEGIN
-    CREATE TABLE disposal_items (
+    CREATE TABLE dsp_items (
         id INT IDENTITY(1,1) PRIMARY KEY,
-        form_id INT,
+        form_id INT,                      -- Links to dsp_forms.id
         code NVARCHAR(50),
         description NVARCHAR(255),
         serial_no NVARCHAR(100),
         unit_of_measure NVARCHAR(50),
         quantity DECIMAL(10, 2),
-        reason_for_disposal NVARCHAR(MAX),
-        attachment_pictures NVARCHAR(MAX),
-        CONSTRAINT FK_Form_Item FOREIGN KEY (form_id) REFERENCES disposal_forms(id)
+        reason NVARCHAR(MAX),             -- PHP uses 'reason' (check your code), previous script said 'reason_for_disposal'
+        image_path NVARCHAR(MAX),         -- PHP uses 'image_path'
+        CONSTRAINT FK_Form_Item FOREIGN KEY (form_id) REFERENCES dsp_forms(id) ON DELETE CASCADE
     );
 END
-
--- 4. Create the Master List (Employees)
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[lrn_master_list]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE lrn_master_list (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        EmployeeID NVARCHAR(50), 
-        FullName NVARCHAR(100),
-        JobLevel NVARCHAR(50),
-        Department NVARCHAR(100)
-    );
-    INSERT INTO lrn_master_list (EmployeeID, FullName, JobLevel, Department) VALUES ('1001', 'Angelor De Jesus', 'Supervisor', 'IT Dept');
-    INSERT INTO lrn_master_list (EmployeeID, FullName, JobLevel, Department) VALUES ('1002', 'John Staff', 'Staff', 'IT Dept');
-END
-
--- 5. Create Accounts (Login)
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[accounts]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE accounts (
-        AccountID INT IDENTITY(1,1) PRIMARY KEY,
-        EmployeeID INT, 
-        Username NVARCHAR(50),
-        Password NVARCHAR(50)
-    );
-    INSERT INTO accounts (EmployeeID, Username, Password) VALUES (1, 'admin', 'password123');
-    INSERT INTO accounts (EmployeeID, Username, Password) VALUES (2, 'staff', 'password123');
+GO
+    
+    -- Default Admin
+    INSERT INTO lrnph_users (username, password, full_name, empcode, department, job_level, role) 
+    VALUES ('admin', '12345', 'System Admin', '9999', 'IT Dept', 'Manager', 'Admin');
+    
+    -- Default Staff
+    INSERT INTO lrnph_users (username, password, full_name, empcode, department, job_level, role) 
+    VALUES ('staff', '12345', 'John Doe', '1001', 'Production', 'Staff', 'User');
 END
 GO

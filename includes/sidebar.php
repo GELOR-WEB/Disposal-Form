@@ -13,7 +13,7 @@
 
     <div class="glass-panel p-4 mb-6 text-center rounded-xl bg-white/50 border border-white/20 shadow-sm">
         <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">
-            <?php echo substr($_SESSION['full_name'] ?? 'U', 0, 1); ?>
+            <?php $name = $_SESSION['full_name'] ?? $_SESSION['fullname'] ?? 'User'; echo strtoupper(substr(trim($name), 0, 1));?>
         </div>
         <p class="font-bold text-gray-800 text-sm truncate"><?php echo $_SESSION['full_name'] ?? $_SESSION['fullname'] ?? 'User'; ?></p>
         
@@ -31,21 +31,19 @@
         // Get the role string and make it lowercase for easy checking
         // We combine both session variables to be absolutely sure we catch the role
         $my_role = strtolower($_SESSION['role'] ?? '');
-        $my_job  = strtolower($_SESSION['job_level'] ?? '');
-        $full_role_string = $my_role . ' ' . $my_job;
 
         // Define who counts as a "Supervisor/Admin"
         // If the role contains any of these words, they are an Admin
         $is_admin_level = (
-            strpos($full_role_string, 'admin') !== false || 
-            strpos($full_role_string, 'supervisor') !== false || 
-            strpos($full_role_string, 'manager') !== false || 
-            strpos($full_role_string, 'leader') !== false
+            strpos($my_role, 'admin') !== false || 
+            strpos($my_role, 'supervisor') !== false || 
+            strpos($my_role, 'manager') !== false || 
+            strpos($my_role, 'leader') !== false
         );
         // --- LOGIC END ---
         ?>
 
-        <?php if (!$is_admin_level): ?>
+        <?php if (!$is_admin_level && $_SESSION['role'] === 'Employee'): ?>
             <a href="staff_entry.php" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'staff_entry.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-plus-circle"></i>
                 <span>Create Form</span>
@@ -57,7 +55,7 @@
             <span>View Forms</span>
         </a>
 
-        <?php if ($is_admin_level): ?>
+        <?php if ($_SESSION['role'] === 'Executive' || $_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Department Head'): ?>
             <a href="supervisor_dashboard.php" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'supervisor_dashboard.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-check-double"></i>
                 <span>Approvals</span>

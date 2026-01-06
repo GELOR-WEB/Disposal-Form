@@ -83,20 +83,20 @@ $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php foreach ($forms as $form): ?>
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="py-4 px-4 font-mono text-pink-600 font-bold text-sm">
-                                        #<?php echo $form['id']; ?>
+                                        CN-<?php echo date('Y', strtotime($form['created_date'])); ?>-<?php echo str_pad($form['id'], 4, '0', STR_PAD_LEFT); ?>
                                     </td>
                                     <td class="py-4 px-4 text-gray-600 text-sm">
                                         <?php echo date('M d, Y h:i A', strtotime($form['created_date'])); ?>
                                     </td>
                                     <td class="py-4 px-4 text-gray-800 font-medium text-sm">
-                                        <?php echo $_SESSION['department']; ?>
+                                        <?php echo $form['department']; ?>
                                     </td>
                                     <td class="py-4 px-4">
                                         <div class="flex items-center gap-2">
                                             <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
                                                 <i class="fas fa-user"></i>
                                             </div>
-                                            <span class="text-sm font-medium text-gray-700"><?php echo $_SESSION['fullname']; ?></span>
+                                            <span class="text-sm font-medium text-gray-700"><?php echo $form['full_name']; ?></span>
                                         </div>
                                     </td>
                                     <td class="py-4 px-4">

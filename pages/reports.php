@@ -8,6 +8,12 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+if ($_SESSION['role'] === 'Invalid') {
+    // If role is invalid, log out the user
+    header("Location: ../auth/logout.php");
+    exit();
+}
+
 // 2. ROBUST SECURITY CHECK
 $my_role = strtolower($_SESSION['role'] ?? '');
 $my_job  = strtolower($_SESSION['job_level'] ?? '');
@@ -17,7 +23,9 @@ $is_admin_level = (
     strpos($full_role_string, 'admin') !== false || 
     strpos($full_role_string, 'supervisor') !== false || 
     strpos($full_role_string, 'manager') !== false || 
-    strpos($full_role_string, 'leader') !== false
+    strpos($full_role_string, 'leader') !== false ||
+    $my_role === 'executive' ||
+    $my_role === 'department head'
 );
 
 if (!$is_admin_level) {
@@ -135,7 +143,7 @@ try {
                         <h3 class="text-4xl font-bold text-gray-800 mt-2"><?php echo number_format($stats['total_items']); ?></h3>
                         <p class="text-xs text-blue-500 mt-1 font-medium">Accumulated Quantity</p>
                     </div>
-                    <div class="p-4 bg-blue-50 rounded-2xl text-blue-500">
+                    <div class="p-4 bg-grey-50 rounded-2xl text-blue-500">
                         <i class="fas fa-cubes text-2xl"></i>
                     </div>
                 </div>
@@ -177,7 +185,7 @@ try {
                                     </td>
                                     
                                     <td class="py-4 px-4 font-semibold text-gray-700">
-                                        <?php echo htmlspecialchars($_SESSION['department']); ?>
+                                        <?php echo htmlspecialchars($row['department']); ?>
                                     </td>
                                     
                                     <td class="py-4 px-4 text-right">

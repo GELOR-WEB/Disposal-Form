@@ -8,6 +8,12 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+if ($_SESSION['role'] === 'Invalid') {
+    // If role is invalid, log out the user
+    header("Location: ../auth/logout.php");
+    exit();
+}
+
 // 2. Get User Role info
 $my_role = strtolower($_SESSION['role'] ?? '');
 $my_job  = strtolower($_SESSION['job_level'] ?? '');
