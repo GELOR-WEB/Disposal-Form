@@ -27,6 +27,73 @@ try {
     $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    display_unavailable();
+}
+
+function display_unavailable() {
+    die('
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Service Unavailable</title>
+        <style>
+            body {
+                background-color: #fce5f0; /* Matches your app theme */
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .error-card {
+                background: white;
+                padding: 40px;
+                border-radius: 24px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                text-align: center;
+                max-width: 400px;
+                border: 1px solid rgba(255, 255, 255, 0.8);
+            }
+            .icon {
+                font-size: 60px;
+                margin-bottom: 20px;
+            }
+            h2 {
+                color: #333;
+                margin: 0 0 10px 0;
+            }
+            p {
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 25px;
+            }
+            .btn {
+                background: #ff3385;
+                color: white;
+                text-decoration: none;
+                padding: 12px 25px;
+                border-radius: 12px;
+                font-weight: 600;
+                display: inline-block;
+                transition: background 0.2s;
+            }
+            .btn:hover {
+                background: #e01b6b;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="error-card">
+            <div class="icon">🔌</div>
+            <h2>System Unavailable</h2>
+            <p>We are currently unable to connect to the database. Please check your internet connection or try again later.</p>
+            <a href="javascript:location.reload()" class="btn">Try Again</a>
+        </div>
+    </body>
+    </html>
+    ');
 }
 ?>

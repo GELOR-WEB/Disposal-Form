@@ -13,23 +13,23 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-// 2. ROBUST SECURITY CHECK (The Fix)
-// Allows Admins, Managers, Supervisors, Leaders
+// 2. ROBUST SECURITY CHECK
 $my_role = strtolower($_SESSION['role'] ?? '');
 $my_job  = strtolower($_SESSION['job_level'] ?? '');
 $full_role_string = $my_role . ' ' . $my_job;
 
-$is_admin_level = (
-    strpos($full_role_string, 'admin') !== false || 
-    strpos($full_role_string, 'supervisor') !== false || 
-    strpos($full_role_string, 'manager') !== false || 
+$is_admin = (strpos($full_role_string, 'admin') !== false);
+$is_dept_head = (strpos($full_role_string, 'head') !== false || strpos($full_role_string, 'department head') !== false);
+$is_executive = (strpos($full_role_string, 'executive') !== false);
+
+$is_admin_level = $is_admin || $is_dept_head || $is_executive ||
+    strpos($full_role_string, 'supervisor') !== false ||
+    strpos($full_role_string, 'manager') !== false ||
     strpos($full_role_string, 'leader') !== false ||
     $my_role === 'executive' ||
-    $my_role === 'department head'
-);
+    $my_role === 'department head';
 
 if (!$is_admin_level) {
-    // If they don't have permission, send them to View Forms instead of Staff Entry
     header("Location: view_forms.php");
     exit();
 }
@@ -38,8 +38,7 @@ $forms = [];
 $error_message = "";
 
 try {
-    // Fetch forms using PDO
-    // Updated table names to match your system (dsp_forms / dsp_items)
+    // Fetch forms
     $sql = "SELECT df.id, df.full_name, df.created_date, df.department, df.status,
             COUNT(di.id) as item_count
             FROM dsp_forms df
@@ -48,20 +47,19 @@ try {
             ORDER BY df.created_date DESC";
 
     $stmt = $conn->query($sql);
-    
+
     if ($stmt === false) {
-        // Capture SQL Error if query fails
         throw new Exception(print_r($conn->errorInfo(), true));
     }
-    
-    $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $error_message = $e->getMessage();
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Supervisor Dashboard</title>
@@ -69,22 +67,53 @@ try {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* Table Container Logic */
+        .table-container {
+            max-height: calc(80vh - 200px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* Ensure it hits the right edge */
+            width: 100%; 
+        }
+        
+        /* SCROLLBAR STYLING - GRADIENT PINK */
+        .table-container::-webkit-scrollbar {
+            width: 10px; /* Slightly wider to show off the gradient */
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #fdf2f8; /* Very light pink track (matches body bg) */
+            border-left: 1px solid #fce7f3;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            /* THE GRADIENT: Pink 400 to Pink 600 */
+            background-image: linear-gradient(to bottom, #f472b6, #a78bfa); 
+            border-radius: 10px;
+            border: 2px solid #fdf2f8; /* Creates a nice padding effect */
+        }
+        
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background-image: linear-gradient(to bottom, #ec4899, #754cf0ff);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
 
-    <?php 
-    // Safely include sidebar
+<body class="bg-[#fdf2f8] text-gray-800 overflow-y-hidden">
+
+    <?php
     if (file_exists('../includes/sidebar.php')) {
-        include '../includes/sidebar.php'; 
+        include '../includes/sidebar.php';
     } else {
         echo '<div class="p-4 bg-red-100 text-red-700">Error: includes/sidebar.php not found.</div>';
     }
     ?>
-    
+
     <div class="ml-64 p-10 animate-fade-in">
         <h1 class="text-3xl font-bold mb-2 text-gray-800">Approvals Dashboard</h1>
         <p class="text-gray-500 mb-8">Manage and review disposal requests.</p>
-        
+
         <?php if ($error_message): ?>
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
                 <strong class="font-bold">Database Error:</strong>
@@ -92,105 +121,204 @@ try {
             </div>
         <?php endif; ?>
 
-        <div class="glass-panel bg-white/80 rounded-2xl shadow-xl overflow-hidden border border-white/50">
-            <table class="w-full">
+        <div class="mb-6 flex flex-wrap gap-4">
+            <input type="text" id="controlNoSearch" placeholder="Search Crtl No..." class="form-input" style="width: 150px;">
+            <input type="text" id="createdBySearch" placeholder="Search Created By..." class="form-input" style="width: 200px;">
+            <select id="deptFilter" class="form-input" style="width: 200px;">
+                <option value="">All Departments</option>
+                <?php
+                $depts = array_unique(array_column($forms, 'department'));
+                foreach ($depts as $dept) {
+                    echo "<option value=\"$dept\">$dept</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="glass-panel bg-white/80 rounded-2xl shadow-xl overflow-hidden border border-white/50 pb-0 pr-0 pl-0">
+            
+            <table class="w-full" style="table-layout: fixed; min-width: 1000px; border-collapse: collapse;">
                 <thead class="bg-gray-50/50 border-b border-gray-100">
                     <tr>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Created By</th>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Department</th>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Items</th>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[12%]">Control No.</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[18%]">Created By</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">Department</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%]">Items</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[15%]">Status</th>
+                        <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[25%]">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <?php if (empty($forms)): ?>
-                        <tr><td colspan="6" class="p-8 text-center text-gray-400">No disposal forms found.</td></tr>
-                    <?php else: ?>
-                        <?php foreach($forms as $form): ?>
-                        <tr class="hover:bg-pink-50/30 transition-colors">
-                            <td class="p-5 font-mono text-sm text-pink-500 font-bold">#<?php echo $form['id']; ?></td>
-                            <td class="p-5 font-medium"><?php echo $_SESSION['fullname']; ?></td>
-                            <td class="p-5 text-gray-500"><?php echo $_SESSION['department']; ?></td>
-                            <td class="p-5"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold"><?php echo $form['item_count']; ?> Items</span></td>
-                            <td class="p-5">
-                                <?php 
-                                    $statusColor = match($form['status']) {
-                                        'Approved' => 'bg-green-100 text-green-700',
-                                        'Rejected' => 'bg-red-100 text-red-700',
-                                        default => 'bg-yellow-100 text-yellow-700'
-                                    };
-                                ?>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide <?php echo $statusColor; ?>">
-                                    <?php echo $form['status']; ?>
-                                </span>
-                            </td>
-                            <td class="p-5 flex gap-2">
-                                <?php if($form['status'] == 'Pending'): ?>
-                                    <button onclick="approveForm(<?php echo $form['id']; ?>)" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1">
-                                        <i class="fas fa-check"></i> Approve
-                                    </button>
-                                    
-                                    <button onclick="rejectForm(<?php echo $form['id']; ?>)" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                <?php else: ?>
-                                    <span class="text-gray-400 text-xs italic">Completed</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
             </table>
+
+            <div class="table-container">
+                <table class="w-full" style="table-layout: fixed; min-width: 1000px; border-collapse: collapse;">
+                    <tbody class="divide-y divide-gray-100">
+                        <?php if (empty($forms)): ?>
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-gray-400">No disposal forms found.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($forms as $form): ?>
+                                <tr class="hover:bg-pink-50/30 transition-colors" data-date="<?php echo strtotime($form['created_date']); ?>">
+                                    <td class="p-5 font-mono text-sm text-pink-500 font-bold w-[12%]">
+                                        CN-<?php echo date('Y', strtotime($form['created_date'])); ?>-<?php echo str_pad($form['id'], 4, '0', STR_PAD_LEFT); ?>
+                                    </td>
+                                    <td class="p-5 font-medium w-[18%]"><?php echo $form['full_name']; ?></td>
+                                    <td class="p-5 text-gray-500 w-[20%]"><?php echo $form['department']; ?></td>
+                                    <td class="p-5 w-[10%]">
+                                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold"><?php echo $form['item_count']; ?> Items</span>
+                                    </td>
+                                    <td class="p-5 w-[15%]">
+                                        <?php
+                                        $statusColor = match ($form['status']) {
+                                            'Approved' => 'bg-green-100 text-green-700',
+                                            'Rejected' => 'bg-red-100 text-red-700',
+                                            'Admin Approved' => 'bg-blue-100 text-blue-700',
+                                            'Dept Head Approved' => 'bg-purple-100 text-purple-700',
+                                            'Executive Approved' => 'bg-orange-100 text-orange-700',
+                                            default => 'bg-yellow-100 text-yellow-700'
+                                        };
+                                        ?>
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide <?php echo $statusColor; ?>">
+                                            <?php echo $form['status'] == 'Approved' ? 'Completed' : $form['status']; ?>
+                                        </span>
+                                    </td>
+                                    <td class="p-5 flex gap-2 items-center w-[70%]">
+                                        <?php
+                                        $can_approve = false;
+                                        $button_text = "Approve"; 
+
+                                        if ($form['status'] == 'Pending' && $is_admin) {
+                                            $can_approve = true;
+                                            $button_text = "Admin Check";
+                                        }
+                                        elseif ($form['status'] == 'Admin Approved' && $is_dept_head) {
+                                            $can_approve = true;
+                                            $button_text = "Dept Approval";
+                                        }
+                                        elseif ($form['status'] == 'Dept Head Approved' && $is_executive) {
+                                            $can_approve = true;
+                                            $button_text = "Exec Approval";
+                                        }
+                                        elseif ($form['status'] == 'Executive Approved' && $is_dept_head) {
+                                            $can_approve = true;
+                                            $button_text = "Finalize";
+                                        }
+                                        ?>
+
+                                        <?php if ($can_approve): ?>
+                                            <button onclick="approveForm(<?php echo $form['id']; ?>)"
+                                                class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1">
+                                                <i class="fas fa-check"></i> <?php echo $button_text; ?>
+                                            </button>
+
+                                            <button onclick="rejectForm(<?php echo $form['id']; ?>)"
+                                                class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        <?php else: ?>
+                                            <?php if ($form['status'] == 'Approved'): ?>
+                                                <span class="text-green-600 text-xs font-bold"><i class="fas fa-check-circle"></i> Completed</span>
+                                            <?php elseif ($form['status'] == 'Rejected'): ?>
+                                                <span class="text-red-400 text-xs font-bold">Rejected</span>
+                                            <?php else: ?>
+                                                <?php
+                                                $waiting_for = match ($form['status']) {
+                                                    'Pending' => 'Admin approval',
+                                                    'Admin Approved' => 'Dept Head approval',
+                                                    'Dept Head Approved' => 'Executive approval',
+                                                    'Executive Approved' => 'Dept Head final approval',
+                                                    default => 'approval'
+                                                };
+                                                ?>
+                                                <span class="text-gray-400 text-xs italic">Waiting for <?php echo $waiting_for; ?></span>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-    async function approveForm(id) {
-        if(!confirm('Are you sure you want to approve this form?')) return;
-        
-        try {
-            const res = await fetch('../api/approve_forms.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({form_ids: [id]})
-            });
-            const data = await res.json();
-            
-            if(data.success) {
-                alert('Success!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
+        async function approveForm(id) {
+            if (!confirm('Are you sure you want to approve this form?')) return;
+
+            try {
+                const res = await fetch('../api/approve_forms.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        form_ids: [id]
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Success!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                alert('System Error: ' + e.message);
             }
-        } catch(e) {
-            alert('System Error: ' + e.message);
         }
-    }
-    
-    async function rejectForm(id) {
-        if(!confirm('Are you sure you want to REJECT this request?')) return;
-        
-        try {
-            const res = await fetch('../api/reject_form.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({form_ids: [id]})
-            });
-            const data = await res.json();
-            
-            if(data.success) {
-                alert('Request Rejected.');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
+
+        async function rejectForm(id) {
+            const reason = prompt('Are you sure you want to REJECT this request? (Optional: Enter a reason)');
+            if (reason === null) return;
+
+            try {
+                const res = await fetch('../api/reject_form.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        form_ids: [id],
+                        reason: reason
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Request Rejected.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                alert('System Error: ' + e.message);
             }
-        } catch(e) {
-            alert('System Error: ' + e.message);
         }
-    }
+
+        function filterTable() {
+            const controlNo = document.getElementById('controlNoSearch').value.toLowerCase();
+            const createdBy = document.getElementById('createdBySearch').value.toLowerCase();
+            const dept = document.getElementById('deptFilter').value;
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const control = cells[0].textContent.toLowerCase();
+                const created = cells[1].textContent.toLowerCase();
+                const deptCell = cells[2].textContent;
+                const show = (!controlNo || control.includes(controlNo)) &&
+                    (!createdBy || created.includes(createdBy)) &&
+                    (!dept || deptCell === dept);
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        document.getElementById('controlNoSearch').addEventListener('input', filterTable);
+        document.getElementById('createdBySearch').addEventListener('input', filterTable);
+        document.getElementById('deptFilter').addEventListener('change', filterTable);
     </script>
 </body>
 </html>

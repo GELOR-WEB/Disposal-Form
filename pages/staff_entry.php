@@ -230,7 +230,7 @@ try {
                 <form id="itemForm" class="modal-form-grid">
                     <div class="form-group">
                         <label>Item Code</label>
-                        <input type="text" id="m_code" class="form-input" placeholder="e.g. IT-2026-001">
+                        <input type="text" id="m_code" class="form-input" placeholder="e.g. IT-2026-001" required>
                     </div>
                     <div class="form-group">
                         <label>Description</label>
@@ -238,12 +238,12 @@ try {
                     </div>
                     <div class="form-group">
                         <label>Serial No.</label>
-                        <input type="text" id="m_serial" class="form-input">
+                        <input type="text" id="m_serial" class="form-input" required>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
                             <label>Unit of Measure</label>
-                            <select id="m_uom" class="form-input">
+                            <select id="m_uom" class="form-input" required>
                                 <option value="" disabled selected>Select an item</option>
                                 <option value="Piece">Piece</option>
                                 <option value="Pieces">Pieces</option>
@@ -288,11 +288,11 @@ try {
                     </div>
                     <div class="form-group">
                         <label>Reason</label>
-                        <textarea id="m_reason" class="form-input" rows="2"></textarea>
+                        <textarea id="m_reason" class="form-input" rows="2" required></textarea>
                     </div>
                     <div class="form-group">
                         <label>Attachment Picture</label>
-                        <input type="file" id="m_file" class="form-input" accept="image/*">
+                        <input type="file" id="m_file" class="form-input" accept="image/*" required>
                         <p id="existingFileLabel" class="text-xs text-gray-500 mt-1 hidden"></p>
                     </div>
                     <button type="button" id="modalSubmitBtn" class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveItem()">Add Item to Form</button>
@@ -362,7 +362,7 @@ try {
             const fileInput = document.getElementById('m_file');
 
             if (!desc || !qty) {
-                alert("Description and Quantity required");
+                alert("All fields required");
                 return;
             }
 
@@ -431,12 +431,18 @@ try {
                                 <i class="fas fa-edit"></i>
                             </button>
                             
-                            <button class="btn-danger text-xs px-2 py-1 rounded shadow-sm" onclick="removeItem(${index})">
+                            <button class="btn-danger text-xs px-2 py-1 rounded shadow-sm" onclick="confirmRemoveItem(${index})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>`;
             });
+        }
+
+        function confirmRemoveItem(index) {
+            if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                removeItem(index);
+            }
         }
 
         function removeItem(index) {

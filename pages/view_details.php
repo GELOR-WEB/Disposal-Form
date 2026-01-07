@@ -106,29 +106,84 @@ try {
                 </div>
                 
                 <div class="info-group">
-                    <label>Status Check</label>
-                    <div>
-                       <?php if ($form['status'] === 'Pending'): ?>
-                            <span class="text-yellow-600 italic">To be checked</span>
-                        
-                        <?php elseif ($form['status'] === 'Rejected'): ?>
-                            <div class="flex flex-col">
-                                <span class="text-red-600 font-semibold">Rejected by: <?php echo htmlspecialchars($_SESSION['fullname'] ?? 'Unknown'); ?></span>
-                                <span class="text-xs text-gray-500 mt-1">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    <?php echo date('M j, Y • g:i A', strtotime($form['approved_date'])); ?>
+                    <label>Approval Hierarchy</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Admin:</span>
+                            <?php if (!empty($form['admin_approved_date'])): ?>
+                                <span class="text-green-600 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                    <span class="text-xs text-gray-500">
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['admin_approved_date'])); ?>)
+                                    </span>
                                 </span>
-                            </div>
-                        
-                        <?php else: ?>
-                            <div class="flex flex-col">
-                                <span class="text-green-600 font-semibold">Approved by: <?php echo htmlspecialchars($_SESSION['fullname'] ?? 'Unknown'); ?></span>
-                                <span class="text-xs text-gray-500 mt-1">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    <?php echo date('M j, Y • g:i A', strtotime($form['approved_date'])); ?>
+                            <?php elseif ($form['status'] == 'Rejected' && empty($form['admin_approved_date'])): ?>
+                                <span class="text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-times-circle"></i> Rejected
                                 </span>
-                            </div>
-                        <?php endif; ?>
+                            <?php else: ?>
+                                <span class="text-gray-400 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Dept. Head:</span>
+                            <?php if (!empty($form['dept_head_approved_date'])): ?>
+                                <span class="text-green-600 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                    <span class="text-xs text-gray-500">
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['dept_head_approved_date'])); ?>)
+                                    </span>
+                                </span>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['admin_approved_date']) && empty($form['dept_head_approved_date'])): ?>
+                                <span class="text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-times-circle"></i> Rejected
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Executive:</span>
+                            <?php if (!empty($form['executive_approved_date'])): ?>
+                                <span class="text-green-600 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                    <span class="text-xs text-gray-500">
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['executive_approved_date'])); ?>)
+                                    </span>
+                                </span>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['dept_head_approved_date']) && empty($form['executive_approved_date'])): ?>
+                                <span class="text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-times-circle"></i> Rejected
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Dept. Head Final:</span>
+                            <?php if (!empty($form['final_dept_head_approved_date'])): ?>
+                                <span class="text-green-600 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                    <span class="text-xs text-gray-500">
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['final_dept_head_approved_date'])); ?>)
+                                    </span>
+                                </span>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['executive_approved_date']) && empty($form['final_dept_head_approved_date'])): ?>
+                                <span class="text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-times-circle"></i> Rejected
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,10 +219,8 @@ try {
                             </td>
                             <td class="py-4 italic text-gray-500">"<?php echo htmlspecialchars($item['reason']); ?>"</td>
                             <td class="py-4">
-                                <?php if (!empty($item['attachment_pictures']) && $item['attachment_pictures'] !== 'No Image'): ?>
-                                    <a href="../uploads/<?php echo $item['attachment_pictures']; ?>" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">
-                                        <i class="fas fa-paperclip"></i> View Image
-                                    </a>
+                                <?php if (!empty($item['image_path']) && $item['image_path'] !== 'No Image'): ?>
+                                    <img src="../uploads/<?php echo $item['image_path']; ?>" alt="Attachment" class="max-w-20 max-h-20 object-cover rounded border cursor-pointer" onclick="openImageModal('../uploads/<?php echo $item['image_path']; ?>')">
                                 <?php else: ?>
                                     <span class="text-gray-300">No Image</span>
                                 <?php endif; ?>
@@ -179,5 +232,33 @@ try {
             </div>
         </div>
     </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="relative max-w-4xl max-h-screen p-4">
+            <img id="modalImage" src="" alt="Full Size" class="max-w-full max-h-full object-contain">
+            <button onclick="closeImageModal()" class="absolute top-2 right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100">
+                <i class="fas fa-times text-gray-800"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function openImageModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside the image
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+    </script>
 </body>
 </html>

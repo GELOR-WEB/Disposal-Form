@@ -17,8 +17,14 @@ BEGIN
         department NVARCHAR(100),
         created_date DATETIME DEFAULT GETDATE(),
         status NVARCHAR(50) DEFAULT 'Pending',
-        approved_by NVARCHAR(50) NULL,    -- Changed to NVARCHAR to store ID or EmpCode
-        approved_date DATETIME NULL
+        admin_approved_by NVARCHAR(50) NULL,
+        admin_approved_date DATETIME NULL,
+        dept_head_approved_by NVARCHAR(50) NULL,
+        dept_head_approved_date DATETIME NULL,
+        executive_approved_by NVARCHAR(50) NULL,
+        executive_approved_date DATETIME NULL,
+        final_dept_head_approved_by NVARCHAR(50) NULL,
+        final_dept_head_approved_date DATETIME NULL
     );
 END
 GO

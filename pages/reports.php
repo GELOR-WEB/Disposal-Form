@@ -108,7 +108,7 @@ try {
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-[#fdf2f8]">
     
     <?php include '../includes/sidebar.php'; ?>
 
