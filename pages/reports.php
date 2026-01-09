@@ -83,6 +83,7 @@ try {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Reports • La Rose Noire</title>
     <link rel="icon" type="image/jpg" href="../assets/images/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -105,6 +106,14 @@ try {
             padding-left: 280px; 
             padding-top: 20px; 
             padding-right: 20px; 
+        }
+
+        @media (max-width: 768px) {
+            body { padding-left: 20px !important; }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body { padding-left: 240px !important; }
         }
     </style>
 </head>

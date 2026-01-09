@@ -16,14 +16,50 @@ require_once '../db/conn.php';
 
 // Pagination setup
 $per_page = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $per_page;
 
-// Get total count for pagination
+// Get filter parameters
+$dept_filter = isset($_GET['dept']) ? trim($_GET['dept']) : '';
+$status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
+$name_filter = isset($_GET['name']) ? trim($_GET['name']) : '';
+$control_filter = isset($_GET['control']) ? trim($_GET['control']) : '';
+$sort_order = isset($_GET['sort']) && $_GET['sort'] === 'asc' ? 'ASC' : 'DESC';
+
+// Build WHERE clause based on filters
+$where_conditions = [];
+$params = [];
+
+if (!empty($dept_filter)) {
+    $where_conditions[] = "department = :dept";
+    $params[':dept'] = $dept_filter;
+}
+
+if (!empty($status_filter)) {
+    // Map 'Completed' filter to 'Approved' in database
+    $db_status = ($status_filter === 'Completed') ? 'Approved' : $status_filter;
+    $where_conditions[] = "status = :status";
+    $params[':status'] = $db_status;
+}
+
+if (!empty($name_filter)) {
+    $where_conditions[] = "full_name LIKE :name";
+    $params[':name'] = '%' . $name_filter . '%';
+}
+
+if (!empty($control_filter)) {
+    $where_conditions[] = "id LIKE :control";
+    $params[':control'] = '%' . $control_filter . '%';
+}
+
+$where_clause = count($where_conditions) > 0 ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
+
+// Get total count for pagination (with filters applied)
 try {
-    $total_sql = "SELECT COUNT(*) as total FROM dsp_forms";
-    $total_stmt = $conn->query($total_sql);
+    $total_sql = "SELECT COUNT(*) as total FROM dsp_forms $where_clause";
+    $total_stmt = $conn->prepare($total_sql);
+    $total_stmt->execute($params);
     $total_forms = $total_stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $total_pages = ceil($total_forms / $per_page);
 } catch (PDOException $e) {
@@ -31,29 +67,22 @@ try {
     $total_pages = 1;
 }
 
-// Get all departments for filter
+// Get all departments for filter dropdown
 try {
-    $dept_sql = "SELECT DISTINCT department FROM dsp_forms ORDER BY department";
+    $dept_sql = "SELECT DISTINCT department FROM dsp_forms WHERE department IS NOT NULL AND department != '' ORDER BY department";
     $dept_stmt = $conn->query($dept_sql);
     $all_depts = $dept_stmt->fetchAll(PDO::FETCH_COLUMN);
 } catch (PDOException $e) {
     $all_depts = [];
 }
 
-// Get paginated forms
+// Get paginated forms with filters
 try {
-    $sql = "SELECT * FROM dsp_forms ORDER BY created_date DESC OFFSET $offset ROWS FETCH NEXT $per_page ROWS ONLY";
-    $stmt = $conn->query($sql);
+    $sql = "SELECT * FROM dsp_forms $where_clause ORDER BY created_date $sort_order OFFSET $offset ROWS FETCH NEXT $per_page ROWS ONLY";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
     $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Debug: Check if forms exist
-    if (empty($forms)) {
-        echo "";
-    } else {
-        echo "";
-    }
 } catch (PDOException $e) {
-    echo "";
     $forms = [];
 }
 ?>
@@ -62,6 +91,7 @@ try {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>View Forms • Facilities</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -86,12 +116,24 @@ try {
     <link rel="icon" type="image/jpg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="../styles/style.css">
     <style>
-        /* 3. UPDATED: Adjusted padding to match dashboard */
+        /* Responsive body layout */
         body {
             padding-left: 280px;
             padding-top: 20px;
             padding-right: 20px;
             overflow-y: hidden;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-left: 20px !important;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body {
+                padding-left: 240px !important;
+            }
         }
 
         .status-badge {
@@ -106,6 +148,7 @@ try {
             white-space: nowrap;
         }
 
+        /* Status Colors */
         .status-Pending {
             background: #fef3c7;
             color: #92400e;
@@ -165,18 +208,60 @@ try {
             transform: translateY(1px);
         }
 
+        /* 2. Flexbox Table Container */
         .table-container {
-            max-height: calc(80vh - 230px);
+            flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
+            width: 100%;
+            min-height: 0;
         }
 
-        .table thead th {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .table-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #fdf2f8;
+            border-left: 1px solid #fce7f3;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background-image: linear-gradient(to bottom, #f472b6, #db2777);
+            border-radius: 10px;
+            border: 2px solid #fdf2f8;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background-image: linear-gradient(to bottom, #ec4899, #be185d);
+        }
+
+        /* Tablet responsive adjustments */
+        @media (min-width: 769px) and (max-width: 1440px) {
+
+            /* Minimize filter inputs */
+            .form-input {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                width: 140px !important;
+                /* Compact width for tablets */
+            }
+
+            /* Even smaller width for status filter */
+            #statusFilter {
+                width: 110px !important;
+            }
+
+            /* Minimize buttons */
+            .btn {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            /* Adjust card margin to prevent pagination cutoff */
+            .card {
+                margin-bottom: 5rem !important;
+            }
         }
     </style>
 </head>
@@ -184,84 +269,104 @@ try {
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
-    <div class="animate-fade-in max-w-7xl mx-auto">
-        <div class="glass-panel p-6 mb-8 flex justify-between items-center" style="border-radius: 16px;">
-            <div>
-                <h1 style="margin:0; font-size: 1.8rem;">Submitted Disposals</h1>
-                <p style="margin:0; color:#6b7280;">Manage and track facility disposal requests</p>
+    <div class="animate-fade-in max-w-7xl mx-auto h-[calc(100vh-40px)] flex flex-col">
+
+        <div class="flex-none">
+            <div class="glass-panel p-6 mb-8 flex justify-between items-center" style="border-radius: 16px;">
+                <div>
+                    <h1 style="margin:0; font-size: 1.8rem;">Submitted Disposals</h1>
+                    <p style="margin:0; color:#6b7280;">Manage and track facility disposal requests</p>
+                </div>
+            </div>
+
+            <div class="mb-4 flex flex-wrap gap-4">
+                <div style="position: relative;">
+                    <i class="fas fa-search"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;"></i>
+                    <input type="text" id="controlNoSearch" class="form-input" placeholder="Search Control No..."
+                        style="padding-left: 30px; width: 200px;"
+                        value="<?php echo htmlspecialchars($control_filter); ?>">
+                </div>
+                <button id="sortDateToggle" class="btn" title="Toggle date sort">Date ↕</button>
+                <select id="deptFilter" class="form-input" style="width: 200px;">
+                    <option value="">All Departments</option>
+                    <?php
+                    foreach ($all_depts as $dept) {
+                        $selected = ($dept === $dept_filter) ? 'selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($dept) . "\" $selected>" . htmlspecialchars($dept) . "</option>";
+                    }
+                    ?>
+                </select>
+                <input type="text" id="nameSearch" placeholder="Search Name..." class="form-input" style="width: 200px;"
+                    value="<?php echo htmlspecialchars($name_filter); ?>">
+                <select id="statusFilter" class="form-input" style="width: 150px;">
+                    <option value="">All Status</option>
+                    <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Admin Approved" <?php echo $status_filter === 'Admin Approved' ? 'selected' : ''; ?>>
+                        Admin Approved</option>
+                    <option value="Dept Head Approved" <?php echo $status_filter === 'Dept Head Approved' ? 'selected' : ''; ?>>Dept Head Approved</option>
+                    <option value="Executive Approved" <?php echo $status_filter === 'Executive Approved' ? 'selected' : ''; ?>>Executive Approved</option>
+                    <option value="Completed" <?php echo $status_filter === 'Completed' ? 'selected' : ''; ?>>Completed
+                    </option>
+                    <option value="Rejected" <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected
+                    </option>
+                </select>
             </div>
         </div>
 
-        <div class="mb-4 flex flex-wrap gap-4">
-            <div style="position: relative;">
-                <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;"></i>
-                <input type="text" id="controlNoSearch" class="form-input" placeholder="Search Control No..." style="padding-left: 30px; width: 200px;">
-            </div>
-            <button id="sortDateAsc" class="btn">Latest ↑</button>
-            <button id="sortDateDesc" class="btn">Oldest ↓</button>
-            <select id="deptFilter" class="form-input" style="width: 200px;">
-                <option value="">All Departments</option>
-                <?php
-                $depts = array_unique(array_column($forms, 'department'));
-                foreach ($depts as $dept) {
-                    echo "<option value=\"$dept\">$dept</option>";
-                }
-                ?>
-            </select>
-            <input type="text" id="nameSearch" placeholder="Search Name..." class="form-input" style="width: 200px;">
-            <select id="statusFilter" class="form-input" style="width: 150px;">
-                <option value="">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Admin Approved">Admin Approved</option>
-                <option value="Dept Head Approved">Dept Head Approved</option>
-                <option value="Executive Approved">Executive Approved</option>
-                <option value="Completed">Completed</option>
-                <option value="Rejected">Rejected</option>
-            </select>
-        </div>
+        <div
+            class="card p-0 flex-1 flex flex-col min-h-0 overflow-hidden shadow-lg border border-gray-100 bg-white rounded-2xl mb-4">
 
-
-
-        <div class="card p-6 overflow-x-auto">
-            <div class="table w-full">
+            <div class="w-full">
                 <table class="w-full" style="border-collapse: collapse; min-width: 800px;">
-                    <thead>
-                        <tr class="border-b border-gray-100">
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[10%]">Control No.</th>
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[17%]">Date Created</th>
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[25%]">Department</th>
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[25%]">Created By</th>
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[18%]">Status</th>
-                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[12%]">Details</th>
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[10%]">Control
+                                No.</th>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[17%]">Date
+                                Created</th>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[23%]">
+                                Department</th>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[22%]">Created
+                                By</th>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[16%]">Status
+                            </th>
+                            <th class="text-center py-4 px-4 font-bold text-gray-500 uppercase text-xs w-[12%]">Details
+                            </th>
                         </tr>
                     </thead>
                 </table>
-                <div class="table-container">
-                    <table class="w-full" style="border-collapse: collapse; min-width: 800px;">
-                        <tbody class="divide-y divide-gray-50">
+            </div>
+
+            <div class="table-container">
+                <table class="w-full" style="border-collapse: collapse; min-width: 800px;">
+                    <tbody class="divide-y divide-gray-50">
                         <?php if (count($forms) > 0): ?>
                             <?php foreach ($forms as $form): ?>
-                                <tr class="hover:bg-gray-50 transition-colors" data-date="<?php echo strtotime($form['created_date']); ?>">
-                                    <td class="py-4 px-4 font-mono text-pink-600 font-bold text-sm">
+                                <tr class="hover:bg-gray-50 transition-colors"
+                                    data-date="<?php echo strtotime($form['created_date']); ?>">
+                                    <td class="py-4 px-4 font-mono text-pink-600 font-bold text-sm text-center w-[10%]">
                                         CN-<?php echo date('Y', strtotime($form['created_date'])); ?>-<?php echo str_pad($form['id'], 4, '0', STR_PAD_LEFT); ?>
                                     </td>
-                                    <td class="py-4 px-4 text-gray-600 text-sm">
+                                    <td class="py-4 px-4 text-gray-600 text-sm text-center w-[17%]">
                                         <?php echo date('M d, Y h:i A', strtotime($form['created_date'])); ?>
                                     </td>
-                                    <td class="py-4 px-4 text-gray-800 font-medium text-sm">
+                                    <td class="py-4 px-4 text-gray-800 font-medium text-sm text-center w-[23%]">
                                         <?php echo $form['department']; ?>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
+                                    <td class="py-4 px-4 w-[22%]">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div
+                                                class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
                                                 <i class="fas fa-user"></i>
                                             </div>
-                                            <span class="text-sm font-medium text-gray-700"><?php echo $form['full_name']; ?></span>
+                                            <span
+                                                class="text-sm font-medium text-gray-700"><?php echo $form['full_name']; ?></span>
                                         </div>
                                     </td>
-                                    <td class="py-4 px-4 text-center">
-                                        <?php 
-                                        $statusClass = match($form['status']) {
+                                    <td class="py-4 px-4 text-center w-[16%]">
+                                        <?php
+                                        $statusClass = match ($form['status']) {
                                             'Approved' => 'status-Completed',
                                             'Rejected' => 'status-Rejected',
                                             'Admin Approved' => 'status-AdminApproved',
@@ -275,82 +380,172 @@ try {
                                             <?php echo $displayStatus; ?>
                                         </span>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <a href="view_details.php?id=<?php echo $form['id']; ?>" class="bg-white border border-gray-200 text-gray-600 hover:text-pink-600 hover:border-pink-300 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                    <td class="py-4 px-4 text-center w-[12%]">
+                                        <a href="view_details.php?id=<?php echo $form['id']; ?>"
+                                            class="bg-white border border-gray-200 text-gray-600 hover:text-pink-600 hover:border-pink-300 rounded-md text-[13px] font-bold transition-all shadow-sm px-3 py-1 whitespace-nowrap">
                                             View Details
                                         </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">No forms found.</td></tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-gray-400">No forms found.</td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
-                </div>
             </div>
-            
+
+            <?php
+            // Build query string for pagination links with filters
+            $query_params = [];
+            if (!empty($dept_filter))
+                $query_params['dept'] = $dept_filter;
+            if (!empty($status_filter))
+                $query_params['status'] = $status_filter;
+            if (!empty($name_filter))
+                $query_params['name'] = $name_filter;
+            if (!empty($control_filter))
+                $query_params['control'] = $control_filter;
+            if (isset($_GET['sort']))
+                $query_params['sort'] = $_GET['sort'];
+
+            function build_page_url($page_num, $params)
+            {
+                $params['page'] = $page_num;
+                return '?' . http_build_query($params);
+            }
+            ?>
             <?php if ($total_pages > 1): ?>
-            <div class="flex justify-center">
-                <div class="flex space-x-2">
-                    <?php if ($page > 1): ?>
-                        <a href="?page=1" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">First</a>
-                        <a href="?page=<?php echo $page - 1; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
-                    <?php endif; ?>
-                    
-                    <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
-                        <a href="?page=<?php echo $i; ?>" class="px-3 py-2 <?php echo $i == $page ? 'bg-pink-500 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'; ?> rounded-md text-sm font-medium">
-                            <?php echo $i; ?>
-                        </a>
-                    <?php endfor; ?>
-                    
-                    <?php if ($page < $total_pages): ?>
-                        <a href="?page=<?php echo $page + 1; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
-                        <a href="?page=<?php echo $total_pages; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Last</a>
-                    <?php endif; ?>
+                <div class="py-4 flex justify-center border-t border-gray-100 flex-none bg-white px-2">
+                    <div class="flex items-center space-x-2 md:space-x-2 select-none flex-wrap justify-center gap-y-2">
+
+                        <?php if ($page > 1): ?>
+                            <a href="<?php echo build_page_url(1, $query_params); ?>"
+                                class="h-8 w-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all shadow-sm flex-shrink-0"
+                                title="First Page">
+                                <i class="fas fa-angles-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span
+                                class="h-8 w-8 flex items-center justify-center border border-gray-100 rounded-md text-gray-300 cursor-not-allowed flex-shrink-0">
+                                <i class="fas fa-angles-left"></i>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($page > 1): ?>
+                            <a href="<?php echo build_page_url($page - 1, $query_params); ?>"
+                                class="h-8 px-2 md:px-3 flex items-center justify-center border border-gray-200 rounded-md text-xs md:text-sm font-medium text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all shadow-sm gap-1 flex-shrink-0">
+                                <i class="fas fa-angle-left"></i>
+                                <span class="hidden sm:inline">Previous</span>
+                            </a>
+                        <?php else: ?>
+                            <span
+                                class="h-8 px-2 md:px-3 flex items-center justify-center border border-gray-100 rounded-md text-xs md:text-sm font-medium text-gray-300 cursor-not-allowed gap-1 flex-shrink-0">
+                                <i class="fas fa-angle-left"></i>
+                                <span class="hidden sm:inline">Previous</span>
+                            </span>
+                        <?php endif; ?>
+
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
+                                <a href="<?php echo build_page_url($i, $query_params); ?>"
+                                    class="h-8 w-8 flex items-center justify-center rounded-md text-xs md:text-sm font-bold transition-all border flex-shrink-0
+                                   <?php echo $i == $page
+                                       ? 'bg-pink-500 text-white border-pink-500 shadow-md'
+                                       : 'bg-white border-gray-200 text-gray-600 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200'; ?>">
+                                    <?php echo $i; ?>
+                                </a>
+                            <?php endfor; ?>
+                        </div>
+
+                        <?php if ($page < $total_pages): ?>
+                            <a href="<?php echo build_page_url($page + 1, $query_params); ?>"
+                                class="h-8 px-2 md:px-3 flex items-center justify-center border border-gray-200 rounded-md text-xs md:text-sm font-medium text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all shadow-sm gap-1 flex-shrink-0">
+                                <span class="hidden sm:inline">Next</span>
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span
+                                class="h-8 px-2 md:px-3 flex items-center justify-center border border-gray-100 rounded-md text-xs md:text-sm font-medium text-gray-300 cursor-not-allowed gap-1 flex-shrink-0">
+                                <span class="hidden sm:inline">Next</span>
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($page < $total_pages): ?>
+                            <a href="<?php echo build_page_url($total_pages, $query_params); ?>"
+                                class="h-8 w-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all shadow-sm flex-shrink-0"
+                                title="Last Page">
+                                <i class="fas fa-angles-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span
+                                class="h-8 w-8 flex items-center justify-center border border-gray-100 rounded-md text-gray-300 cursor-not-allowed flex-shrink-0">
+                                <i class="fas fa-angles-right"></i>
+                            </span>
+                        <?php endif; ?>
+
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
         </div>
     </div>
+
     <script>
-        function filterTable() {
-            const controlNo = document.getElementById('controlNoSearch').value.toLowerCase();
+        function applyFilters() {
+            const params = new URLSearchParams();
+
+            const controlNo = document.getElementById('controlNoSearch').value.trim();
             const status = document.getElementById('statusFilter').value;
             const dept = document.getElementById('deptFilter').value;
-            const name = document.getElementById('nameSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const control = cells[0].textContent.toLowerCase();
-                const deptCell = cells[2].textContent;
-                const nameCell = cells[3].textContent.toLowerCase();
-                const statusCell = cells[4].textContent.trim();
-                const show = (!controlNo || control.includes(controlNo)) &&
-                    (!status || statusCell === status) &&
-                    (!dept || deptCell === dept) &&
-                    (!name || nameCell.includes(name));
-                row.style.display = show ? '' : 'none';
-            });
+            const name = document.getElementById('nameSearch').value.trim();
+
+            if (controlNo) params.set('control', controlNo);
+            if (status) params.set('status', status);
+            if (dept) params.set('dept', dept);
+            if (name) params.set('name', name);
+
+            // Reset to page 1 when filtering
+            params.set('page', '1');
+
+            window.location.href = '?' + params.toString();
         }
 
-        function sortTable(asc) {
-            const tbody = document.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            rows.sort((a, b) => {
-                const dateA = parseInt(a.dataset.date);
-                const dateB = parseInt(b.dataset.date);
-                return asc ? dateA - dateB : dateB - dateA;
-            });
-            rows.forEach(row => tbody.appendChild(row));
+        // Debounce function for text inputs
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
 
-        document.getElementById('controlNoSearch').addEventListener('input', filterTable);
-        document.getElementById('statusFilter').addEventListener('change', filterTable);
-        document.getElementById('deptFilter').addEventListener('change', filterTable);
-        document.getElementById('nameSearch').addEventListener('input', filterTable);
-        document.getElementById('sortDateAsc').addEventListener('click', () => sortTable(true));
-        document.getElementById('sortDateDesc').addEventListener('click', () => sortTable(false));
+        const debouncedFilter = debounce(applyFilters, 500);
+
+        document.getElementById('controlNoSearch').addEventListener('input', debouncedFilter);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('deptFilter').addEventListener('change', applyFilters);
+        document.getElementById('nameSearch').addEventListener('input', debouncedFilter);
+
+        // Toggle date sort button
+        const urlParams = new URLSearchParams(window.location.search);
+        let sortAscending = urlParams.get('sort') === 'asc';
+
+        document.getElementById('sortDateToggle').addEventListener('click', function () {
+            sortAscending = !sortAscending;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('sort', sortAscending ? 'asc' : 'desc');
+            params.set('page', '1'); // Reset to page 1 when sorting
+
+            window.location.href = '?' + params.toString();
+        });
     </script>
 </body>
 

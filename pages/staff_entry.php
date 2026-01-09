@@ -32,10 +32,10 @@ try {
     $sql_last = "SELECT MAX(id) as last_id FROM dsp_forms";
     $stmt_last = $conn->query($sql_last);
     $row_last = $stmt_last->fetch(PDO::FETCH_ASSOC);
-    
+
     // 2. Calculate the next ID (if DB is empty, start at 1)
     $next_id = ($row_last['last_id'] ?? 0) + 1;
-    
+
     // 3. Format it: "CN-" + Year + "-000X" (e.g., CN-2026-0006)
     $display_control_no = "CN-" . date('Y') . "-" . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 
@@ -78,6 +78,18 @@ try {
             padding-left: 280px;
             padding-top: 20px;
             padding-right: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-left: 20px !important;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body {
+                padding-left: 240px !important;
+            }
         }
 
         .header-grid {
@@ -147,8 +159,11 @@ try {
     <?php include '../includes/sidebar.php'; ?>
 
     <div class="animate-fade-in max-w-7xl mx-auto">
-        <div class="glass-panel p-6" style="border-radius: 24px; position: relative; overflow: hidden; margin-bottom: 2rem;">
-            <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 6px; background: linear-gradient(to bottom, #f472b6, #a78bfa);"></div>
+        <div class="glass-panel p-6"
+            style="border-radius: 24px; position: relative; overflow: hidden; margin-bottom: 2rem;">
+            <div
+                style="position: absolute; top: 0; left: 0; bottom: 0; width: 6px; background: linear-gradient(to bottom, #f472b6, #a78bfa);">
+            </div>
             <div class="header-grid">
                 <div>
                     <h1 style="margin: 0; font-size: 2rem; font-weight: 800; color: #1f2937;">Create Disposal Form</h1>
@@ -198,7 +213,8 @@ try {
                     <tbody id="itemsTableBody">
                         <tr id="emptyRow">
                             <td colspan="8" style="text-align: center; padding: 40px; color: #9ca3af;">
-                                <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                                <i class="fas fa-box-open"
+                                    style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
                                 No items added yet. Click "Add Item" to start.
                             </td>
                         </tr>
@@ -214,7 +230,8 @@ try {
         </div>
 
         <div style="margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 40px;">
-            <button type="button" onclick="submitForm()" class="btn-primary" style="background: var(--gradient-secondary); padding: 15px 40px; font-size: 1.1rem;">
+            <button type="button" onclick="submitForm()" class="btn-primary"
+                style="background: var(--gradient-secondary); padding: 15px 40px; font-size: 1.1rem;">
                 <i class="fas fa-paper-plane"></i> Submit Form
             </button>
         </div>
@@ -282,8 +299,8 @@ try {
                         </div>
                         <div class="form-group">
                             <label>Quantity</label>
-                            <input type="number" id="m_qty" class="form-input" min="1" required 
-                            onkeydown="if(event.key==='-' || event.key==='e') event.preventDefault()">
+                            <input type="number" id="m_qty" class="form-input" min="1" required
+                                onkeydown="if(event.key==='-' || event.key==='e') event.preventDefault()">
                         </div>
                     </div>
                     <div class="form-group">
@@ -295,7 +312,8 @@ try {
                         <input type="file" id="m_file" class="form-input" accept="image/*" required>
                         <p id="existingFileLabel" class="text-xs text-gray-500 mt-1 hidden"></p>
                     </div>
-                    <button type="button" id="modalSubmitBtn" class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveItem()">Add Item to Form</button>
+                    <button type="button" id="modalSubmitBtn" class="btn-primary" style="width: 100%; margin-top: 10px;"
+                        onclick="saveItem()">Add Item to Form</button>
                 </form>
             </div>
         </div>
