@@ -50,10 +50,12 @@
             </a>
         <?php endif; ?>
 
+        <?php if (!$is_admin_level && $_SESSION['role'] === 'Employee'): ?>
         <a href="view_forms.php" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'view_forms.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
             <i class="fas fa-list"></i>
             <span>View Forms</span>
         </a>
+        <?php endif; ?>
 
         <?php if ($_SESSION['role'] === 'Executive' || $_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Department Head'): ?>
             <a href="supervisor_dashboard.php" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'supervisor_dashboard.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">

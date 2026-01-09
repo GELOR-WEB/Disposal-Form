@@ -85,12 +85,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     exit();
                 }
                 elseif ($username === '40021'){
-                    $_SESSION['role'] = 'Admin';
+                    $_SESSION['role'] = 'Department Head';
                     header("Location: ../pages/view_forms.php");
                     exit();
                 }
                 elseif ($username === '40235'){
-                    $_SESSION['role'] = 'Department Head';
+                    $_SESSION['role'] = 'Facilities Head';
                     header("Location: ../pages/view_forms.php");
                     exit();
                 }

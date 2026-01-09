@@ -357,14 +357,25 @@ try {
 
         // Renamed logic to saveItem to handle both Add and Update
         function saveItem() {
-            const desc = document.getElementById('m_desc').value;
-            const qty = document.getElementById('m_qty').value;
+            // 1. Get all input values (Trim removes accidental spaces)
+            const code = document.getElementById('m_code').value.trim();
+            const desc = document.getElementById('m_desc').value.trim();
+            const serial = document.getElementById('m_serial').value.trim();
+            const uom = document.getElementById('m_uom').value;
+            const qty = document.getElementById('m_qty').value.trim();
+            const reason = document.getElementById('m_reason').value.trim();
             const fileInput = document.getElementById('m_file');
 
-            if (!desc || !qty) {
-                alert("All fields required");
-                return;
+            // 2. LOGIC: Check if ANY text field is empty
+            // We also check if it is a NEW item (editingIndex === -1) and no file is selected.
+            const isMissingFile = (editingIndex === -1 && fileInput.files.length === 0);
+
+            if (!code || !desc || !serial || !uom || !qty || !reason || isMissingFile) {
+                alert("Please fill out all fields");
+                return; // Stop the function here
             }
+
+            // ... (Rest of the saving logic remains the same) ...
 
             // Check for new file
             let fileName = "No Image";
@@ -373,12 +384,12 @@ try {
             if (editingIndex > -1) {
                 // --- UPDATE EXISTING ITEM ---
                 const item = items[editingIndex];
-                item.code = document.getElementById('m_code').value;
+                item.code = code;
                 item.desc = desc;
-                item.serial = document.getElementById('m_serial').value;
-                item.uom = document.getElementById('m_uom').value;
+                item.serial = serial;
+                item.uom = uom;
                 item.qty = qty;
-                item.reason = document.getElementById('m_reason').value;
+                item.reason = reason;
 
                 if (hasNewFile) {
                     itemFiles[item.temp_id] = fileInput.files[0];
@@ -394,12 +405,12 @@ try {
 
                 items.push({
                     temp_id: tempId,
-                    code: document.getElementById('m_code').value,
+                    code: code,
                     desc: desc,
-                    serial: document.getElementById('m_serial').value,
-                    uom: document.getElementById('m_uom').value,
+                    serial: serial,
+                    uom: uom,
                     qty: qty,
-                    reason: document.getElementById('m_reason').value,
+                    reason: reason,
                     fileName: fileName
                 });
             }

@@ -1,5 +1,13 @@
 <?php
 session_start();
+
+// If the user is NOT an Employee (meaning they are Admin, Head, or Exec), 
+// redirect them to the Supervisor Dashboard immediately.
+if (isset($_SESSION['role']) && $_SESSION['role'] !== 'Employee') {
+    header("Location: supervisor_dashboard.php");
+    exit();
+}
+
 if (!isset($_SESSION['username'])) {
     header("Location: ../login.php");
     exit();
@@ -37,24 +45,25 @@ try {
     $sql = "SELECT * FROM dsp_forms ORDER BY created_date DESC OFFSET $offset ROWS FETCH NEXT $per_page ROWS ONLY";
     $stmt = $conn->query($sql);
     $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Debug: Check if forms exist
     if (empty($forms)) {
-        echo "<!-- DEBUG: No forms found in database -->";
+        echo "";
     } else {
-        echo "<!-- DEBUG: Found " . count($forms) . " forms -->";
+        echo "";
     }
 } catch (PDOException $e) {
-    echo "<!-- DEBUG: Database error: " . $e->getMessage() . " -->";
+    echo "";
     $forms = [];
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>View Forms • Facilities</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -78,25 +87,65 @@ try {
     <link rel="stylesheet" href="../styles/style.css">
     <style>
         /* 3. UPDATED: Adjusted padding to match dashboard */
-        body { 
-            padding-left: 280px; 
-            padding-top: 20px; 
-            padding-right: 20px; 
+        body {
+            padding-left: 280px;
+            padding-top: 20px;
+            padding-right: 20px;
             overflow-y: hidden;
         }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; text-align: center; min-width: 120px; display: inline-block; white-space: nowrap; }
-        .status-Pending { background: #fef3c7; color: #92400e; }
-        .status-Approved { background: #dcfce7; color: #166534; }
-        .status-Rejected { background: #fee2e2; color: #991b1b; }
-        .status-Completed { background: #dcfce7; color: #166534; }
-        .status-AdminApproved { background: #dbeafe; color: #1e40af; }
-        .status-DeptHeadApproved { background: #ede9fe; color: #7c3aed; }
-        .status-ExecutiveApproved { background: #fed7aa; color: #9a3412; }
-        .btn { 
-            padding: 8px 16px; 
-            border: 1px solid #e5e7eb; 
-            background: white; 
-            cursor: pointer; 
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            min-width: 120px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .status-Pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-Approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-Rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-Completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-AdminApproved {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-DeptHeadApproved {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .status-ExecutiveApproved {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
             border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 500;
@@ -104,29 +153,34 @@ try {
             transition: all 0.2s ease;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
+
         .btn:hover {
             background: #f9fafb;
             border-color: #d1d5db;
             box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
         }
+
         .btn:active {
             background: #f3f4f6;
             transform: translateY(1px);
         }
+
         .table-container {
-            max-height: calc(80vh - 200px);
+            max-height: calc(80vh - 230px);
             overflow-y: auto;
             overflow-x: hidden;
         }
+
         .table thead th {
             position: sticky;
             top: 0;
             background: white;
             z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
+
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
@@ -148,7 +202,8 @@ try {
             <select id="deptFilter" class="form-input" style="width: 200px;">
                 <option value="">All Departments</option>
                 <?php
-                foreach ($all_depts as $dept) {
+                $depts = array_unique(array_column($forms, 'department'));
+                foreach ($depts as $dept) {
                     echo "<option value=\"$dept\">$dept</option>";
                 }
                 ?>
@@ -164,6 +219,8 @@ try {
                 <option value="Rejected">Rejected</option>
             </select>
         </div>
+
+
 
         <div class="card p-6 overflow-x-auto">
             <div class="table w-full">
@@ -233,11 +290,11 @@ try {
                 </div>
             </div>
             
-            <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-            <div class="mt-6 flex justify-center">
+            <div class="flex justify-center">
                 <div class="flex space-x-2">
                     <?php if ($page > 1): ?>
+                        <a href="?page=1" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">First</a>
                         <a href="?page=<?php echo $page - 1; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
                     <?php endif; ?>
                     
@@ -249,6 +306,7 @@ try {
                     
                     <?php if ($page < $total_pages): ?>
                         <a href="?page=<?php echo $page + 1; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+                        <a href="?page=<?php echo $total_pages; ?>" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Last</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -256,43 +314,44 @@ try {
         </div>
     </div>
     <script>
-    function filterTable() {
-        const controlNo = document.getElementById('controlNoSearch').value.toLowerCase();
-        const status = document.getElementById('statusFilter').value;
-        const dept = document.getElementById('deptFilter').value;
-        const name = document.getElementById('nameSearch').value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const control = cells[0].textContent.toLowerCase();
-            const deptCell = cells[2].textContent;
-            const nameCell = cells[3].textContent.toLowerCase();
-            const statusCell = cells[4].textContent.trim();
-            const show = (!controlNo || control.includes(controlNo)) &&
-                         (!status || statusCell === status) &&
-                         (!dept || deptCell === dept) &&
-                         (!name || nameCell.includes(name));
-            row.style.display = show ? '' : 'none';
-        });
-    }
+        function filterTable() {
+            const controlNo = document.getElementById('controlNoSearch').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const dept = document.getElementById('deptFilter').value;
+            const name = document.getElementById('nameSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const control = cells[0].textContent.toLowerCase();
+                const deptCell = cells[2].textContent;
+                const nameCell = cells[3].textContent.toLowerCase();
+                const statusCell = cells[4].textContent.trim();
+                const show = (!controlNo || control.includes(controlNo)) &&
+                    (!status || statusCell === status) &&
+                    (!dept || deptCell === dept) &&
+                    (!name || nameCell.includes(name));
+                row.style.display = show ? '' : 'none';
+            });
+        }
 
-    function sortTable(asc) {
-        const tbody = document.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        rows.sort((a, b) => {
-            const dateA = parseInt(a.dataset.date);
-            const dateB = parseInt(b.dataset.date);
-            return asc ? dateA - dateB : dateB - dateA;
-        });
-        rows.forEach(row => tbody.appendChild(row));
-    }
+        function sortTable(asc) {
+            const tbody = document.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                const dateA = parseInt(a.dataset.date);
+                const dateB = parseInt(b.dataset.date);
+                return asc ? dateA - dateB : dateB - dateA;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
 
-    document.getElementById('controlNoSearch').addEventListener('input', filterTable);
-    document.getElementById('statusFilter').addEventListener('change', filterTable);
-    document.getElementById('deptFilter').addEventListener('change', filterTable);
-    document.getElementById('nameSearch').addEventListener('input', filterTable);
-    document.getElementById('sortDateAsc').addEventListener('click', () => sortTable(true));
-    document.getElementById('sortDateDesc').addEventListener('click', () => sortTable(false));
+        document.getElementById('controlNoSearch').addEventListener('input', filterTable);
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+        document.getElementById('deptFilter').addEventListener('change', filterTable);
+        document.getElementById('nameSearch').addEventListener('input', filterTable);
+        document.getElementById('sortDateAsc').addEventListener('click', () => sortTable(true));
+        document.getElementById('sortDateDesc').addEventListener('click', () => sortTable(false));
     </script>
 </body>
+
 </html>

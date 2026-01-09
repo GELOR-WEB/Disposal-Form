@@ -14,11 +14,8 @@ if (!isset($_GET['id'])) {
 $form_id = $_GET['id'];
 
 try {
-    // 2. FETCH FORM DETAILS (SAFE VERSION)
-    // I removed the subquery to 'LRNPH_E' to fix the permission error.
-    // Now it just pulls the data from your local table.
+    // 2. FETCH FORM DETAILS
     $sqlHeader = "SELECT * FROM dsp_forms WHERE id = ?";
-                  
     $stmt = $conn->prepare($sqlHeader);
     $stmt->execute([$form_id]);
     $form = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -41,7 +38,7 @@ try {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Form #<?php echo $form_id; ?> Details</title>
+    <title>Form #<?php echo $form['id']; ?> Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -108,27 +105,9 @@ try {
                 <div class="info-group">
                     <label>Approval Hierarchy</label>
                     <div class="space-y-2">
+                        
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">Admin:</span>
-                            <?php if (!empty($form['admin_approved_date'])): ?>
-                                <span class="text-green-600 flex items-center gap-1">
-                                    <i class="fas fa-check-circle"></i> Approved
-                                    <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['admin_approved_date'])); ?>)
-                                    </span>
-                                </span>
-                            <?php elseif ($form['status'] == 'Rejected' && empty($form['admin_approved_date'])): ?>
-                                <span class="text-red-600 flex items-center gap-1">
-                                    <i class="fas fa-times-circle"></i> Rejected
-                                </span>
-                            <?php else: ?>
-                                <span class="text-gray-400 flex items-center gap-1">
-                                    <i class="fas fa-clock"></i> Pending
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">Dept. Head:</span>
+                            <span class="text-sm font-medium">Dept.Head:</span>
                             <?php if (!empty($form['dept_head_approved_date'])): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
@@ -136,7 +115,7 @@ try {
                                         (<?php echo date('M j, Y g:i A', strtotime($form['dept_head_approved_date'])); ?>)
                                     </span>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['admin_approved_date']) && empty($form['dept_head_approved_date'])): ?>
+                            <?php elseif ($form['status'] == 'Rejected' && empty($form['dept_head_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -146,6 +125,27 @@ try {
                                 </span>
                             <?php endif; ?>
                         </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Fac.Head:</span>
+                            <?php if (!empty($form['fac_head_approved_date'])): ?>
+                                <span class="text-green-600 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                    <span class="text-xs text-gray-500">
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['fac_head_approved_date'])); ?>)
+                                    </span>
+                                </span>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['dept_head_approved_date']) && empty($form['fac_head_approved_date'])): ?>
+                                <span class="text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-times-circle"></i> Rejected
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium">Executive:</span>
                             <?php if (!empty($form['executive_approved_date'])): ?>
@@ -155,7 +155,7 @@ try {
                                         (<?php echo date('M j, Y g:i A', strtotime($form['executive_approved_date'])); ?>)
                                     </span>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['dept_head_approved_date']) && empty($form['executive_approved_date'])): ?>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['fac_head_approved_date']) && empty($form['executive_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -165,16 +165,17 @@ try {
                                 </span>
                             <?php endif; ?>
                         </div>
+
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">Dept. Head Final:</span>
-                            <?php if (!empty($form['final_dept_head_approved_date'])): ?>
+                            <span class="text-sm font-medium">Final Check:</span>
+                            <?php if (!empty($form['final_fac_head_approved_date'])): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
                                     <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['final_dept_head_approved_date'])); ?>)
+                                        (<?php echo date('M j, Y g:i A', strtotime($form['final_fac_head_approved_date'])); ?>)
                                     </span>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['executive_approved_date']) && empty($form['final_dept_head_approved_date'])): ?>
+                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['executive_approved_date']) && empty($form['final_fac_head_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -184,6 +185,7 @@ try {
                                 </span>
                             <?php endif; ?>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -233,7 +235,6 @@ try {
         </div>
     </div>
 
-    <!-- Image Modal -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="relative max-w-4xl max-h-screen p-4">
             <img id="modalImage" src="" alt="Full Size" class="max-w-full max-h-full object-contain">

@@ -1,16 +1,14 @@
-<?php // THE ULTIMATE LOGIN PAGE 
-?>
+<?php // THE ULTIMATE LOGIN PAGE ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login • La Rose Noire</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/jpg" href="assets/favicon.jpg">
+    <link rel="icon" type="image/jpeg" href="../assets/favicon.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="styles/style.css">
     <script>
         tailwind.config = {
             theme: {
@@ -33,7 +31,6 @@
         }
     </script>
 </head>
-
 <body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
     <!-- Animated Background Blobs -->
@@ -109,8 +106,8 @@
                         </label>
                         <div class="relative">
                             <input type="text" name="username" required
-                                class="form-input pl-12 pr-4 py-4 text-gray-700 placeholder-gray-400"
-                                placeholder="Enter your username">
+                                   class="form-input pl-12 pr-4 py-4 text-gray-700 placeholder-gray-400"
+                                   placeholder="Enter your username">
                             <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center">
                                 <i class="fas fa-user text-white text-xs"></i>
                             </div>
@@ -125,22 +122,22 @@
                         </label>
                         <div class="relative">
                             <input type="password" name="password" required
-                                class="form-input pl-12 pr-12 py-4 text-gray-700 placeholder-gray-400"
-                                placeholder="••••••••"
-                                id="password">
+                                   class="form-input pl-12 pr-12 py-4 text-gray-700 placeholder-gray-400"
+                                   placeholder="••••••••"
+                                   id="password">
                             <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center">
                                 <i class="fas fa-lock text-white text-xs"></i>
                             </div>
-                            <button type="button" onclick="togglePassword()"
-                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500 transition-colors p-1">
+                            <button type="button" onclick="togglePassword()" 
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500 transition-colors p-1">
                                 <i class="fas fa-eye text-sm" id="password-toggle"></i>
                             </button>
                         </div>
 
                         <!-- Forgot Password Link -->
                         <div class="flex justify-end">
-                            <button type="button" id="forgot-link"
-                                class="text-sm font-semibold text-pink-500 hover:text-pink-600 transition-all duration-300 flex items-center gap-2 group">
+                            <button type="button" id="forgot-link" 
+                                    class="text-sm font-semibold text-pink-500 hover:text-pink-600 transition-all duration-300 flex items-center gap-2 group">
                                 <i class="fas fa-key text-xs group-hover:rotate-12 transition-transform"></i>
                                 Forgot Password?
                             </button>
@@ -281,11 +278,10 @@
         // Check for error parameter in URL and show modal
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('error') === 'invalid') {
+            if (urlParams.get('error') === 'invalid_credentials') {
                 openErrorModal();
             }
         });
     </script>
 </body>
-
 </html>
