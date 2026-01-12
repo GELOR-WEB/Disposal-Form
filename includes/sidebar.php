@@ -132,7 +132,7 @@
             </a>
         <?php endif; ?>
 
-        <?php if ($_SESSION['role'] === 'Executive' || $_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Department Head'): ?>
+        <?php if ($_SESSION['role'] === 'Executive' || $_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Department Head' || $_SESSION['role'] === 'Facilities Head'): ?>
             <a href="supervisor_dashboard.php"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'supervisor_dashboard.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-check-double"></i>
@@ -154,7 +154,15 @@
             <span>Return to Portal</span>
         </a>
 
-        <a href="../assets/docs/manual.pdf" target="_blank"
+        <?php
+        $manual_link = '../assets/docs/employee_manual.pdf';
+        $r = $_SESSION['role'] ?? '';
+        if ($r === 'Executive' || $r === 'Admin' || $r === 'Department Head' || $r === 'Facilities Head') {
+            $manual_link = '../assets/docs/admin_manual.pdf';
+        }
+        ?>
+
+        <a href="<?php echo $manual_link; ?>" target="_blank"
             class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50">
             <i class="fas fa-question-circle"></i>
             <span>Help / Guide</span>

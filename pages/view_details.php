@@ -134,14 +134,25 @@ try {
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">Disposal Request #<?php echo $form['id']; ?></h1>
+                    <?php
+                    // Display Logic Mapping
+                    $displayStatus = $form['status'];
+                    if ($form['status'] == 'Approved')
+                        $displayStatus = 'Completed';
+                    elseif ($form['status'] == 'Dept Head Approved')
+                        $displayStatus = 'Dept. Head Approved';
+                    elseif ($form['status'] == 'Admin Approved' || $form['status'] == 'Fac Head Approved')
+                        $displayStatus = 'Fac. Head Approved';
+                    ?>
                     <span class="status-badge status-<?php echo $form['status']; ?>">
-                        <?php echo $form['status']; ?>
+                        <?php echo $displayStatus; ?>
                     </span>
                 </div>
                 <div class="text-right">
                     <p class="text-sm text-gray-500">Date Created</p>
                     <p class="font-bold text-gray-700 text-lg">
-                        <?php echo date('F j, Y', strtotime($form['created_date'])); ?></p>
+                        <?php echo date('F j, Y', strtotime($form['created_date'])); ?>
+                    </p>
                 </div>
             </div>
 
@@ -159,16 +170,24 @@ try {
                     <label>Approval Hierarchy</label>
                     <div class="space-y-2">
 
+                        <!-- 1. Dept Head -->
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">Dept.Head:</span>
-                            <?php if (!empty($form['dept_head_approved_date'])): ?>
+                            <span class="text-sm font-medium">Department Head:</span>
+                            <?php
+                            $s = $form['status'];
+                            $is_dept_ok = !empty($form['dept_head_approved_date']) ||
+                                in_array($s, ['Dept Head Approved', 'Fac Head Approved', 'Admin Approved', 'Executive Approved', 'Approved']);
+
+                            if ($is_dept_ok): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
-                                    <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['dept_head_approved_date'])); ?>)
-                                    </span>
+                                    <?php if (!empty($form['dept_head_approved_date'])): ?>
+                                        <span class="text-xs text-gray-500">
+                                            (<?php echo date('M j, Y g:i A', strtotime($form['dept_head_approved_date'])); ?>)
+                                        </span>
+                                    <?php endif; ?>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && empty($form['dept_head_approved_date'])): ?>
+                            <?php elseif ($s == 'Rejected' && empty($form['dept_head_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -179,16 +198,23 @@ try {
                             <?php endif; ?>
                         </div>
 
+                        <!-- 2. Facilities Head -->
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">Fac.Head:</span>
-                            <?php if (!empty($form['fac_head_approved_date'])): ?>
+                            <span class="text-sm font-medium">Facilities Head:</span>
+                            <?php
+                            $is_fac_ok = !empty($form['fac_head_approved_date']) ||
+                                in_array($s, ['Fac Head Approved', 'Admin Approved', 'Executive Approved', 'Approved']);
+
+                            if ($is_fac_ok): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
-                                    <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['fac_head_approved_date'])); ?>)
-                                    </span>
+                                    <?php if (!empty($form['fac_head_approved_date'])): ?>
+                                        <span class="text-xs text-gray-500">
+                                            (<?php echo date('M j, Y g:i A', strtotime($form['fac_head_approved_date'])); ?>)
+                                        </span>
+                                    <?php endif; ?>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['dept_head_approved_date']) && empty($form['fac_head_approved_date'])): ?>
+                            <?php elseif ($s == 'Rejected' && !empty($form['dept_head_approved_date']) && empty($form['fac_head_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -199,16 +225,23 @@ try {
                             <?php endif; ?>
                         </div>
 
+                        <!-- 3. Executive -->
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium">Executive:</span>
-                            <?php if (!empty($form['executive_approved_date'])): ?>
+                            <?php
+                            $is_exec_ok = !empty($form['executive_approved_date']) ||
+                                in_array($s, ['Executive Approved', 'Approved']);
+
+                            if ($is_exec_ok): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
-                                    <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['executive_approved_date'])); ?>)
-                                    </span>
+                                    <?php if (!empty($form['executive_approved_date'])): ?>
+                                        <span class="text-xs text-gray-500">
+                                            (<?php echo date('M j, Y g:i A', strtotime($form['executive_approved_date'])); ?>)
+                                        </span>
+                                    <?php endif; ?>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['fac_head_approved_date']) && empty($form['executive_approved_date'])): ?>
+                            <?php elseif ($s == 'Rejected' && !empty($form['fac_head_approved_date']) && empty($form['executive_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -219,16 +252,23 @@ try {
                             <?php endif; ?>
                         </div>
 
+                        <!-- 4. Final Final -->
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium">Final Check:</span>
-                            <?php if (!empty($form['final_fac_head_approved_date'])): ?>
+                            <?php
+                            $is_final_ok = !empty($form['final_fac_head_approved_date']) ||
+                                $s == 'Approved';
+
+                            if ($is_final_ok): ?>
                                 <span class="text-green-600 flex items-center gap-1">
                                     <i class="fas fa-check-circle"></i> Approved
-                                    <span class="text-xs text-gray-500">
-                                        (<?php echo date('M j, Y g:i A', strtotime($form['final_fac_head_approved_date'])); ?>)
-                                    </span>
+                                    <?php if (!empty($form['final_fac_head_approved_date'])): ?>
+                                        <span class="text-xs text-gray-500">
+                                            (<?php echo date('M j, Y g:i A', strtotime($form['final_fac_head_approved_date'])); ?>)
+                                        </span>
+                                    <?php endif; ?>
                                 </span>
-                            <?php elseif ($form['status'] == 'Rejected' && !empty($form['executive_approved_date']) && empty($form['final_fac_head_approved_date'])): ?>
+                            <?php elseif ($s == 'Rejected' && !empty($form['executive_approved_date']) && empty($form['final_fac_head_approved_date'])): ?>
                                 <span class="text-red-600 flex items-center gap-1">
                                     <i class="fas fa-times-circle"></i> Rejected
                                 </span>
@@ -265,9 +305,11 @@ try {
                         <?php foreach ($items as $item): ?>
                             <tr class="border-b border-gray-50 hover:bg-pink-50/20 transition-colors">
                                 <td class="py-4 font-mono text-pink-600 font-bold">
-                                    <?php echo htmlspecialchars($item['code']); ?></td>
+                                    <?php echo htmlspecialchars($item['code']); ?>
+                                </td>
                                 <td class="py-4 font-medium text-gray-800">
-                                    <?php echo htmlspecialchars($item['description']); ?></td>
+                                    <?php echo htmlspecialchars($item['description']); ?>
+                                </td>
                                 <td class="py-4"><?php echo htmlspecialchars($item['serial_no']); ?></td>
                                 <td class="py-4">
                                     <span class="bg-gray-100 px-2 py-1 rounded font-bold text-gray-700">

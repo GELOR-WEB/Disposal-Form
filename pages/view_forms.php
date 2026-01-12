@@ -1,11 +1,15 @@
 <?php
 session_start();
 
-// If the user is NOT an Employee (meaning they are Admin, Head, or Exec), 
-// redirect them to the Supervisor Dashboard immediately.
-if (isset($_SESSION['role']) && $_SESSION['role'] !== 'Employee') {
-    header("Location: supervisor_dashboard.php");
-    exit();
+// Redirect Logic:
+// Executives, Admins, and Facilities Heads should land on the Dashboard.
+// Department Heads and Employees stay here to view the list.
+if (isset($_SESSION['role'])) {
+    $r = $_SESSION['role'];
+    if ($r === 'Executive' || $r === 'Admin' || $r === 'Facilities Head' || $r === 'Department Head' || strpos(strtolower($r), 'admin') !== false) {
+        header("Location: supervisor_dashboard.php");
+        exit();
+    }
 }
 
 if (!isset($_SESSION['username'])) {
@@ -37,8 +41,20 @@ if (!empty($dept_filter)) {
 }
 
 if (!empty($status_filter)) {
-    // Map 'Completed' filter to 'Approved' in database
-    $db_status = ($status_filter === 'Completed') ? 'Approved' : $status_filter;
+    // Map display filters to database values
+    $db_status = $status_filter;
+    if ($status_filter === 'Completed') {
+        $db_status = 'Approved';
+    } elseif ($status_filter === 'Department Head') {
+        $db_status = 'Dept Head Approved';
+    } elseif ($status_filter === 'Facilities Head') {
+        $db_status = 'Fac Head Approved'; // Primary DB status
+        // Note: If DB uses 'Admin Approved', we might need OR logic in query or just map here if strict 1:1
+        // But for filter params, usually exact match. Let's try 'Fac Head Approved' based on dashboard code.
+        // If legacy data uses 'Admin Approved', we might miss it. 
+        // Let's stick to what the user effectively asked for: Dept->Dept, Fac->Fac.
+    }
+
     $where_conditions[] = "status = :status";
     $params[':status'] = $db_status;
 }
@@ -302,9 +318,10 @@ try {
                 <select id="statusFilter" class="form-input" style="width: 150px;">
                     <option value="">All Status</option>
                     <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                    <option value="Admin Approved" <?php echo $status_filter === 'Admin Approved' ? 'selected' : ''; ?>>
-                        Admin Approved</option>
-                    <option value="Dept Head Approved" <?php echo $status_filter === 'Dept Head Approved' ? 'selected' : ''; ?>>Dept Head Approved</option>
+                    <option value="Department Head" <?php echo $status_filter === 'Department Head' ? 'selected' : ''; ?>>
+                        Dept. Head Approved</option>
+                    <option value="Facilities Head" <?php echo $status_filter === 'Facilities Head' ? 'selected' : ''; ?>>
+                        Fac. Head Approved</option>
                     <option value="Executive Approved" <?php echo $status_filter === 'Executive Approved' ? 'selected' : ''; ?>>Executive Approved</option>
                     <option value="Completed" <?php echo $status_filter === 'Completed' ? 'selected' : ''; ?>>Completed
                     </option>
@@ -369,12 +386,19 @@ try {
                                         $statusClass = match ($form['status']) {
                                             'Approved' => 'status-Completed',
                                             'Rejected' => 'status-Rejected',
-                                            'Admin Approved' => 'status-AdminApproved',
+                                            'Admin Approved', 'Fac Head Approved' => 'status-AdminApproved',
                                             'Dept Head Approved' => 'status-DeptHeadApproved',
                                             'Executive Approved' => 'status-ExecutiveApproved',
                                             default => 'status-Pending'
                                         };
-                                        $displayStatus = $form['status'] == 'Approved' ? 'Completed' : $form['status'];
+                                        // Display Logic Mapping
+                                        $displayStatus = $form['status'];
+                                        if ($form['status'] == 'Approved')
+                                            $displayStatus = 'Completed';
+                                        elseif ($form['status'] == 'Dept Head Approved')
+                                            $displayStatus = 'Dept. Head Approved';
+                                        elseif ($form['status'] == 'Admin Approved' || $form['status'] == 'Fac Head Approved')
+                                            $displayStatus = 'Fac. Head Approved';
                                         ?>
                                         <span class="status-badge <?php echo $statusClass; ?>">
                                             <?php echo $displayStatus; ?>

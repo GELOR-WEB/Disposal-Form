@@ -21,11 +21,13 @@ $full_role_string = $my_role . ' ' . $my_job;
 
 $is_admin_level = (
     strpos($full_role_string, 'admin') !== false || 
+    strpos($full_role_string, 'facilities head') !== false ||
     strpos($full_role_string, 'supervisor') !== false || 
     strpos($full_role_string, 'manager') !== false || 
     strpos($full_role_string, 'leader') !== false ||
     $my_role === 'executive' ||
-    $my_role === 'department head'
+    $my_role === 'department head' ||
+    $my_role === 'facilities head'
 );
 
 if (!$is_admin_level) {

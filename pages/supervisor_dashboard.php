@@ -16,10 +16,11 @@ if (!isset($_SESSION['username'])) {
 // 2. ROBUST SECURITY CHECK
 $my_role = strtolower($_SESSION['role'] ?? '');
 $my_job = strtolower($_SESSION['job_level'] ?? '');
+$my_dept = $_SESSION['department'] ?? ''; // Added department check
 $full_role_string = $my_role . ' ' . $my_job;
 
-$is_admin = (strpos($full_role_string, 'admin') !== false); // Acts as Fac Head
-$is_dept_head = (strpos($full_role_string, 'head') !== false || strpos($full_role_string, 'department head') !== false);
+$is_admin = (strpos($full_role_string, 'admin') !== false || strpos($full_role_string, 'facilities head') !== false); // Acts as Fac Head
+$is_dept_head = (strpos($full_role_string, 'department head') !== false); // Stricter check
 $is_executive = (strpos($full_role_string, 'executive') !== false);
 
 $is_admin_level = $is_admin || $is_dept_head || $is_executive ||
@@ -27,7 +28,8 @@ $is_admin_level = $is_admin || $is_dept_head || $is_executive ||
     strpos($full_role_string, 'manager') !== false ||
     strpos($full_role_string, 'leader') !== false ||
     $my_role === 'executive' ||
-    $my_role === 'department head';
+    $my_role === 'department head' ||
+    $my_role === 'facilities head';
 
 if (!$is_admin_level) {
     header("Location: view_forms.php");
@@ -316,13 +318,13 @@ try {
                                         $can_approve = false;
                                         $button_text = "Approve";
 
-                                        if ($form['status'] == 'Pending' && $is_dept_head) {
+                                        if ($form['status'] == 'Pending' && $is_dept_head && $my_dept == $form['department']) {
                                             $can_approve = true;
                                             $button_text = "Dept Approval";
                                         } elseif ($form['status'] == 'Dept Head Approved' && $is_admin) {
                                             $can_approve = true;
                                             $button_text = "Fac Head Check";
-                                        } elseif ($form['status'] == 'Fac Head Approved' && $is_executive) {
+                                        } elseif (($form['status'] == 'Fac Head Approved' || $form['status'] == 'Admin Approved') && $is_executive) {
                                             $can_approve = true;
                                             $button_text = "Exec Approval";
                                         } elseif ($form['status'] == 'Executive Approved' && $is_admin) {
@@ -456,11 +458,11 @@ try {
     </div>
 
     <script>
-          asyn  c function approveForm(id) {
+        async function approveForm(id) {
             if (!confirm('Are you sure you want to approve this form?')) return;
             try {
                 const res = await fetch('../api/approve_forms.php', {
-                    meth    od: 'POST',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -468,7 +470,7 @@ try {
                         form_ids: [id]
                     })
                 });
-                 cons   t data = await res.json();
+                const data = await res.json();
                 if (data.success) {
                     alert('Success!');
                     location.reload();
@@ -479,12 +481,13 @@ try {
                 alert('System Error: ' + e.message);
             }
         }
-            asyn   c function rejectForm(id) {
+
+        async function rejectForm(id) {
             const reason = prompt('Are you sure you want to REJECT this request? (Optional: Enter a reason)');
             if (reason === null) return;
             try {
                 const res = await fetch('../api/reject_form.php', {
-                    meth    od: 'POST',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -493,7 +496,7 @@ try {
                         reason: reason
                     })
                 });
-                cons    t data = await res.json();
+                const data = await res.json();
                 if (data.success) {
                     alert('Request Rejected.');
                     location.reload();
@@ -504,8 +507,8 @@ try {
                 alert('System Error: ' + e.message);
             }
         }
-   
-            func tion filterTable() {
+
+        function filterTable() {
             const controlNo = document.getElementById('controlNoSearch').value.toLowerCase();
             // Check if elements exist before getting values to prevent errors
             const statusEl = document.getElementById('statusFilter');
@@ -529,8 +532,8 @@ try {
                 const nameCell = cells[3].textContent.toLowerCase();
                 const statusCell = cells[4].textContent.trim();
 
-                       // Logic: Show row if filter is empty OR if data matches filter
-                cons    t show = (!controlNo || control.includes(controlNo)) &&
+                // Logic: Show row if filter is empty OR if data matches filter
+                const show = (!controlNo || control.includes(controlNo)) &&
                     (!status || statusCell === status) &&
                     (!dept || deptCell === dept) &&
                     (!name || nameCell.includes(name));
