@@ -47,13 +47,35 @@ $offset = ($page - 1) * $per_page;
 $total_pages = 1;
 
 try {
+    // 4. PREPARE WHERE CLAUSE (Department Filter)
+    $where_sql = "";
+    $params = [];
+
+    // If Department Head (and NOT Admin/Fac Head/Executive), restrict to their department
+    // Note: $is_admin includes 'Facilities Head'. $is_executive is Executive.
+    // We only restrict if they are strictly a Department Head and nothing higher.
+    if ($is_dept_head && !$is_admin && !$is_executive) {
+        $where_sql = " WHERE department = :dept";
+        // Or "WHERE df.department = :dept" for the main query, but we can reuse if carefully constructed
+        // Let's use separate variables if needed, or just be careful.
+        // dsp_forms is aliased as df in main query, but not in count query.
+        $params[':dept'] = $my_dept;
+    }
+
     // 1. Get Total Count
-    $total_sql = "SELECT COUNT(*) as total FROM dsp_forms";
-    $total_stmt = $conn->query($total_sql);
+    $count_where = $where_sql; // No alias needed for simple count
+    $total_sql = "SELECT COUNT(*) as total FROM dsp_forms" . $count_where;
+    $total_stmt = $conn->prepare($total_sql);
+    $total_stmt->execute($params);
     $total_forms = $total_stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $total_pages = ceil($total_forms / $per_page);
 
     // 2. Fetch Forms with Pagination
+    $main_where = "";
+    if ($is_dept_head && !$is_admin && !$is_executive) {
+        $main_where = " WHERE df.department = :dept";
+    }
+
     $sql = "SELECT df.id, df.full_name, df.created_date, df.department, df.status, df.rejection_reason,
             df.dept_head_approved_date, 
             df.fac_head_approved_date, 
@@ -62,13 +84,15 @@ try {
             COUNT(di.id) as item_count
             FROM dsp_forms df
             LEFT JOIN dsp_items di ON df.id = di.form_id
+            $main_where
             GROUP BY df.id, df.full_name, df.created_date, df.department, df.status, df.rejection_reason,
                      df.dept_head_approved_date, df.fac_head_approved_date, 
                      df.executive_approved_date, df.final_fac_head_approved_date
             ORDER BY df.created_date DESC
             OFFSET $offset ROWS FETCH NEXT $per_page ROWS ONLY";
 
-    $stmt = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
 
     if ($stmt === false) {
         throw new Exception(print_r($conn->errorInfo(), true));
@@ -179,15 +203,17 @@ try {
                     style="width: 150px;">
                 <input type="text" id="createdBySearch" placeholder="Search Created By..." class="form-input"
                     style="width: 200px;">
-                <select id="deptFilter" class="form-input" style="width: 200px;">
-                    <option value="">All Departments</option>
-                    <?php
-                    $depts = array_unique(array_column($forms, 'department'));
-                    foreach ($depts as $dept) {
-                        echo "<option value=\"$dept\">$dept</option>";
-                    }
-                    ?>
-                </select>
+                <?php if (!$is_dept_head || $is_admin || $is_executive): ?>
+                    <select id="deptFilter" class="form-input" style="width: 200px;">
+                        <option value="">All Departments</option>
+                        <?php
+                        $depts = array_unique(array_column($forms, 'department'));
+                        foreach ($depts as $dept) {
+                            echo "<option value=\"$dept\">$dept</option>";
+                        }
+                        ?>
+                    </select>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -211,7 +237,9 @@ try {
                                 Status</th>
                             <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">
                                 Approval Progress</th>
-                            <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">
+                            <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%]">
+                                Details</th>
+                            <th class="p-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[18%]">
                                 Action</th>
                         </tr>
                     </thead>
@@ -311,6 +339,13 @@ try {
                                                     "<?php echo htmlspecialchars($form['rejection_reason']); ?>"</div>
                                             <?php endif; ?>
                                         </div>
+                                    </td>
+
+                                    <td class="p-5 w-[10%]">
+                                        <a href="view_details.php?id=<?php echo $form['id']; ?>"
+                                            class="bg-white border border-gray-200 text-gray-600 hover:text-pink-600 hover:border-pink-300 rounded-md text-[13px] font-bold transition-all shadow-sm px-3 py-1 whitespace-nowrap block text-center">
+                                            View Details
+                                        </a>
                                     </td>
 
                                     <td class="p-5 flex gap-2 w-[100%] flex-wrap content-start">

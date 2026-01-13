@@ -6,7 +6,7 @@ session_start();
 // Department Heads and Employees stay here to view the list.
 if (isset($_SESSION['role'])) {
     $r = $_SESSION['role'];
-    if ($r === 'Executive' || $r === 'Admin' || $r === 'Facilities Head' || $r === 'Department Head' || strpos(strtolower($r), 'admin') !== false) {
+    if ($r === 'Executive' || $r === 'Admin' || $r === 'Facilities Head' || strpos(strtolower($r), 'admin') !== false) {
         header("Location: supervisor_dashboard.php");
         exit();
     }
@@ -26,6 +26,32 @@ $offset = ($page - 1) * $per_page;
 
 // Get filter parameters
 $dept_filter = isset($_GET['dept']) ? trim($_GET['dept']) : '';
+
+// ---------------------------------------------------------
+// ENFORCE DEPARTMENT FILTERING FOR EMPLOYEES
+// ---------------------------------------------------------
+// If the user reaches this page and is NOT an Admin, Executive, or Facilities Head,
+// they should only see their own department's forms.
+// Department Heads are usually redirected to supervisor_dashboard, but if they land here,
+// this logic also applies (which is consistent).
+$my_role = strtolower($_SESSION['role'] ?? '');
+$my_job = strtolower($_SESSION['job_level'] ?? '');
+$full_role = $my_role . ' ' . $my_job;
+
+$is_privileged = (
+    strpos($full_role, 'admin') !== false ||
+    strpos($full_role, 'facilities head') !== false ||
+    strpos($full_role, 'executive') !== false ||
+    $my_role === 'facilities head' ||
+    $my_role === 'executive'
+);
+
+if (!$is_privileged) {
+    // Force the department filter to their own department
+    $dept_filter = $_SESSION['department'] ?? '';
+}
+// ---------------------------------------------------------
+
 $status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
 $name_filter = isset($_GET['name']) ? trim($_GET['name']) : '';
 $control_filter = isset($_GET['control']) ? trim($_GET['control']) : '';
@@ -304,14 +330,20 @@ try {
                         value="<?php echo htmlspecialchars($control_filter); ?>">
                 </div>
                 <button id="sortDateToggle" class="btn" title="Toggle date sort">Date ↕</button>
-                <select id="deptFilter" class="form-input" style="width: 200px;">
-                    <option value="">All Departments</option>
-                    <?php
-                    foreach ($all_depts as $dept) {
-                        $selected = ($dept === $dept_filter) ? 'selected' : '';
-                        echo "<option value=\"" . htmlspecialchars($dept) . "\" $selected>" . htmlspecialchars($dept) . "</option>";
-                    }
-                    ?>
+                <select id="deptFilter" class="form-input" style="width: 200px;" <?php echo (!$is_privileged) ? 'disabled' : ''; ?>>
+                    <?php if (!$is_privileged): ?>
+                        <option value="<?php echo htmlspecialchars($dept_filter); ?>" selected>
+                            <?php echo htmlspecialchars($dept_filter); ?>
+                        </option>
+                    <?php else: ?>
+                        <option value="">All Departments</option>
+                        <?php
+                        foreach ($all_depts as $dept) {
+                            $selected = ($dept === $dept_filter) ? 'selected' : '';
+                            echo "<option value=\"" . htmlspecialchars($dept) . "\" $selected>" . htmlspecialchars($dept) . "</option>";
+                        }
+                        ?>
+                    <?php endif; ?>
                 </select>
                 <input type="text" id="nameSearch" placeholder="Search Name..." class="form-input" style="width: 200px;"
                     value="<?php echo htmlspecialchars($name_filter); ?>">

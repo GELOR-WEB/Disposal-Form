@@ -72,6 +72,34 @@
     }
 </style>
 
+<script>
+    function handleImgError(img, empId) {
+        // Debugging: Log what's happening
+        console.log('Image failed to load:', img.src);
+
+        const currentSrc = img.src.toLowerCase();
+        // Ensure absolute path matching or just check extension
+        // Using split to safely get extension ignoring query params if any
+
+        const baseUrl = 'http://10.2.0.8/lrnph/emp_photos/' + empId;
+
+        // Force sequence: jpg -> jpeg -> png -> gif -> hide
+        if (currentSrc.includes('.jpg')) {
+            console.log('Trying .jpeg');
+            img.src = baseUrl + '.jpeg';
+        } else if (currentSrc.includes('.jpeg')) {
+            console.log('Trying .png');
+            img.src = baseUrl + '.png';
+        } else if (currentSrc.includes('.png')) {
+            console.log('Trying .gif');
+            img.src = baseUrl + '.gif';
+        } else {
+            console.log('All formats failed, hiding image.');
+            img.style.display = 'none';
+        }
+    }
+</script>
+
 <div id="app-sidebar" class="glass-sidebar fixed left-0 top-0 h-full w-64 p-6 flex flex-col z-50">
 
     <div class="mb-8 flex items-center gap-3 px-2">
@@ -88,9 +116,18 @@
 
     <div class="glass-panel p-4 mb-6 text-center rounded-xl bg-white/50 border border-white/20 shadow-sm">
         <div
-            class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">
-            <?php $name = $_SESSION['full_name'] ?? $_SESSION['fullname'] ?? 'User';
-            echo strtoupper(substr(trim($name), 0, 1)); ?>
+            class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold relative overflow-hidden">
+            <!-- Initials (Fallback) -->
+            <?php
+            $name = $_SESSION['full_name'] ?? $_SESSION['fullname'] ?? 'User';
+            $empId = $_SESSION['user_id'] ?? $_SESSION['empcode'] ?? '';
+            echo strtoupper(substr(trim($name), 0, 1));
+            ?>
+
+            <!-- Profile Image (Overlay) -->
+            <img src="http://10.2.0.8/lrnph/emp_photos/<?php echo $empId; ?>.jpg" alt="Profile"
+                class="w-full h-full object-cover absolute top-0 left-0"
+                onerror="handleImgError(this, '<?php echo $empId; ?>')">
         </div>
         <p class="font-bold text-gray-800 text-sm truncate">
             <?php echo $_SESSION['full_name'] ?? $_SESSION['fullname'] ?? 'User'; ?>
