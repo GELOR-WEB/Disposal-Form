@@ -143,17 +143,43 @@
         <?php
         $current_page = basename($_SERVER['PHP_SELF']);
 
-        $my_role = strtolower($_SESSION['role'] ?? '');
+        $my_primary_role = strtolower($_SESSION['role'] ?? '');
+        $my_roles = $_SESSION['roles'] ?? [$my_primary_role]; // Fallback to single if array missing
+        
+        // Helper function to check if user has any of the given roles
+        if (!function_exists('has_role')) {
+            function has_role($roles_to_check, $user_roles)
+            {
+                // normalize user roles to lower case
+                $normalized_user_roles = array_map('strtolower', $user_roles);
 
-        $is_admin_level = (
-            strpos($my_role, 'admin') !== false ||
-            strpos($my_role, 'supervisor') !== false ||
-            strpos($my_role, 'manager') !== false ||
-            strpos($my_role, 'leader') !== false
-        );
+                if (!is_array($roles_to_check)) {
+                    $roles_to_check = [$roles_to_check];
+                }
+
+                foreach ($roles_to_check as $check) {
+                    $check = strtolower($check);
+                    // Handle partial matches for Admin/Supervisor/Manager if needed, 
+                    // but usually direct role match is safer unless we want string contains.
+                    // The original code used strpos for 'admin' etc.
+        
+                    foreach ($normalized_user_roles as $ur) {
+                        if ($ur === $check)
+                            return true;
+                        // Keep the substring check for 'admin'/'supervisor' logic from before
+                        if (($check === 'admin' || $check === 'supervisor') && strpos($ur, $check) !== false)
+                            return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        $is_employee = has_role('Employee', $my_roles);
+        $is_approver = has_role(['Department Head', 'Facilities Head', 'Executive', 'Admin'], $my_roles);
         ?>
 
-        <?php if (!$is_admin_level && $_SESSION['role'] === 'Employee'): ?>
+        <?php if ($is_employee): ?>
             <a href="staff_entry.php"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'staff_entry.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-plus-circle"></i>
@@ -161,7 +187,7 @@
             </a>
         <?php endif; ?>
 
-        <?php if (!$is_admin_level && $_SESSION['role'] === 'Employee'): ?>
+        <?php if ($is_employee && !$is_approver): ?>
             <a href="view_forms.php"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'view_forms.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-list"></i>
@@ -169,7 +195,7 @@
             </a>
         <?php endif; ?>
 
-        <?php if ($_SESSION['role'] === 'Executive' || $_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Department Head' || $_SESSION['role'] === 'Facilities Head'): ?>
+        <?php if ($is_approver): ?>
             <a href="supervisor_dashboard.php"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50 <?php echo ($current_page == 'supervisor_dashboard.php') ? 'bg-pink-50 text-pink-600 font-bold shadow-sm' : ''; ?>">
                 <i class="fas fa-check-double"></i>
@@ -193,8 +219,10 @@
 
         <?php
         $manual_link = '../assets/docs/employee_manual.pdf';
-        $r = $_SESSION['role'] ?? '';
-        if ($r === 'Executive' || $r === 'Admin' || $r === 'Department Head' || $r === 'Facilities Head') {
+
+        if ($is_employee && $is_approver) {
+            $manual_link = '../assets/docs/disposal_form_guide_multi_role.pdf';
+        } elseif ($is_approver) {
             $manual_link = '../assets/docs/admin_manual.pdf';
         }
         ?>

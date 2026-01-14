@@ -47,8 +47,14 @@ $is_privileged = (
 );
 
 if (!$is_privileged) {
-    // Force the department filter to their own department
-    $dept_filter = $_SESSION['department'] ?? '';
+    // Force the department filter to their own SCIPED department (defined in user_roles.php)
+    // If we have a scoped department, use it. Otherwise fallback to the DB one.
+    $scoped = $_SESSION['scoping_dept'] ?? '';
+    if (!empty($scoped)) {
+        $dept_filter = $scoped;
+    } else {
+        $dept_filter = $_SESSION['department'] ?? '';
+    }
 }
 // ---------------------------------------------------------
 

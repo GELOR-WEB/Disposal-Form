@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disposal Form System - Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #f472b6 0%, #a78bfa 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #1f2937;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #f472b6;
+            font-weight: 700;
+        }
+
+        .section-description {
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .diagram-container {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid #e5e7eb;
+        }
+
+        .mermaid {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .key-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .feature-card h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .feature-card p {
+            color: #78350f;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        footer {
+            background: #1f2937;
+            color: #9ca3af;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .table-info {
+            background: #ede9fe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #a78bfa;
+        }
+
+        .table-info h4 {
+            color: #5b21b6;
+            margin-bottom: 10px;
+        }
+
+        .table-info ul {
+            margin-left: 20px;
+            color: #6b21a8;
+        }
+
+        .table-info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🗂️ Disposal Form Management System</h1>
+            <p>La Rose Noire - Facilities Department</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">Complete System Architecture & Data Flow
+                Documentation</p>
+        </header>
+
+        <div class="content">
+
+            <!-- OVERVIEW -->
+            <div class="section">
+                <h2 class="section-title">📋 System Overview</h2>
+                <p class="section-description">
+                    The Disposal Form Management System is a comprehensive web application designed to streamline the
+                    disposal request and approval workflow
+                    for La Rose Noire's Facilities Department. The system implements a multi-tier approval hierarchy
+                    with role-based access control,
+                    department-based visibility scoping, and automated tracking of disposal items.
+                </p>
+
+                <div class="key-features">
+                    <div class="feature-card">
+                        <h3>🔐 Multi-Role Authentication</h3>
+                        <p>Users can have multiple roles (Employee, Department Head, Facilities Head, Executive) with
+                            cumulative permissions and hierarchy-based defaults.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📊 Department Scoping</h3>
+                        <p>Employees and Department Heads see only forms from their assigned department group, ensuring
+                            data isolation and security.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>✅ Approval Workflow</h4>
+                            <p>4-stage approval process: Department Head → Facilities Head → Executive → Final
+                                Facilities Head approval before completion.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📸 Image Attachments</h3>
+                        <p>Each disposal item supports image uploads for visual documentation and verification purposes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGIN FLOW -->
+            <div class="section">
+                <h2 class="section-title">🔑 Login & Authentication Flow</h2>
+                <p class="section-description">
+                    This diagram shows how users authenticate and are assigned roles based on the configuration in
+                    <code>user_roles.php</code>.
+                    The system determines both the user's roles array and their scoping department during login.
+                </p>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        flowchart TD
+                        Start([User visits login.php]) --> Input[Enter Username & Password]
+                        Input --> Submit[Submit to authenticate.php]
+                        Submit --> DBCheck{Verify credentials<br />in lrnph_users}
+
+                        DBCheck -->|Invalid| Error1[Redirect to login.php?error=invalid]
+                        DBCheck -->|Valid| LoadRoles[Load user_roles.php config]
+
+                        LoadRoles --> CheckAllowlist{User in<br />user_map?}
+                        CheckAllowlist -->|No| Error2[Redirect to login.php?error=unauthorized]
+
+                        CheckAllowlist -->|Yes| SetRolesArray[Set $_SESSION['roles'] array]
+                        SetRolesArray --> FindDept[Iterate department_groups<br />to find scoping_dept]
+                        FindDept --> SetScopingDept[Set $_SESSION['scoping_dept']]
+
+                        SetScopingDept --> DeterminePrimary[Determine Primary Role:<br />Executive > Admin > Fac Head >
+                        Dept Head > Employee]
+                        DeterminePrimary --> SetPrimaryRole[Set $_SESSION['role']]
+
+                        SetPrimaryRole --> RouteCheck{Primary Role?}
+                        RouteCheck -->|Employee| EmpDash[Redirect to dashboard.php]
+                        RouteCheck -->|Other Roles| ApproverView[Redirect to view_forms.php]
+
+                        EmpDash --> End([User Session Active])
+                        ApproverView --> End
+
+                        style Start fill:#dbeafe
+                        style End fill:#dcfce7
+                        style Error1 fill:#fee2e2
+                        style Error2 fill:#fee2e2
+                        style SetRolesArray fill:#fef3c7
+                        style SetScopingDept fill:#fef3c7
+                        style SetPrimaryRole fill:#fef3c7
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM CREATION FLOW -->
+            <div class="section">
+                <h2 class="section-title">📝 Form Creation & Submission Flow</h2>
+                <p class="section-description">
+                    This shows the complete journey of creating a disposal form, from the UI interaction to database
+                    storage.
+                    Note that forms are saved with the <code>scoping_dept</code> to ensure they match the user's
+                    visibility filter.
+                </p>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        flowchart TD
+                        Start([User on staff_entry.php]) --> AddItems[User Adds Items via Modal]
+                        AddItems --> LocalStorage[Items stored in localStorage<br />with temp_id]
+                        LocalStorage --> AddMore{Add more<br />items?}
+
+                        AddMore -->|Yes| AddItems
+                        AddMore -->|No| Submit[Click Submit Form]
+
+                        Submit --> BuildFormData[Build FormData object:<br />- items_data JSON<br />- item_file_TEMPID
+                        uploads]
+                        BuildFormData --> API[POST to submit_disposal_form.php]
+
+                        API --> StartTx[Begin Database Transaction]
+                        StartTx --> GetSessionData[Get session
+                        data:<br />$_SESSION['scoping_dept']<br />$_SESSION['fullname']]
+
+                        GetSessionData --> InsertForm[INSERT INTO dsp_forms<br />department = scoping_dept<br />status =
+                        'Pending']
+                        InsertForm --> GetFormID[Capture INSERTED.id]
+
+                        GetFormID --> LoopItems{For each item}
+                        LoopItems --> UploadFile[Move uploaded file to<br />uploads/FORMID_UNIQID_filename]
+                        UploadFile --> InsertItem[INSERT INTO dsp_items<br />form_id, code, desc, etc.]
+
+                        InsertItem --> MoreItems{More items?}
+                        MoreItems -->|Yes| LoopItems
+                        MoreItems -->|No| Commit[Commit Transaction]
+
+                        Commit --> ClearLocal[Clear localStorage]
+                        ClearLocal --> Success[Redirect to view_forms.php]
+
+                        GetFormID -->|Error| Rollback[Rollback Transaction]
+                        Rollback --> ErrorMsg[Return error JSON]
+
+                        Success --> End([Form Successfully Created])
+                        ErrorMsg --> End2([Show Error to User])
+
+                        style Start fill:#dbeafe
+                        style End fill:#dcfce7
+                        style End2 fill:#fee2e2
+                        style InsertForm fill:#fef3c7
+                        style InsertItem fill:#fef3c7
+                        style Commit fill:#d1fae5
+                    </div>
+                </div>
+            </div>
+
+            <!-- APPROVAL WORKFLOW -->
+            <div class="section">
+                <h2 class="section-title">✅ Approval Workflow & Status Changes</h2>
+                <p class="section-description">
+                    The approval process follows a strict 4-stage hierarchy. Each approver can only act on forms at
+                    their designated stage.
+                    The system tracks who approved at each stage and when.
+                </p>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        stateDiagram-v2
+                        [*] --> Pending: Form Created
+
+                        Pending --> DeptHeadApproved: Department Head<br />Approves<br />(dept_head_approved_by)
+                        Pending --> Rejected: Any Approver<br />Rejects
+
+                        DeptHeadApproved --> FacHeadApproved: Facilities Head<br />Approves<br />(fac_head_approved_by)
+                        DeptHeadApproved --> Rejected: Any Approver<br />Rejects
+
+                        FacHeadApproved --> ExecutiveApproved: Executive<br />Approves<br />(executive_approved_by)
+                        FacHeadApproved --> Rejected: Any Approver<br />Rejects
+
+                        ExecutiveApproved --> Approved: Facilities Head<br />Final
+                        Approval<br />(final_fac_head_approved_by)
+                        ExecutiveApproved --> Rejected: Any Approver<br />Rejects
+
+                        Approved --> [*]: Completed
+                        Rejected --> [*]: Terminated
+
+                        note right of Pending
+                        Department Head can only approve
+                        if form.department matches
+                        their scoping_dept
+                        end note
+
+                        note right of Approved
+                        This is the final state.
+                        Form is complete and can
+                        proceed with disposal.
+                        end note
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW & FILTER FLOW -->
+            <div class="section">
+                <h2 class="section-title">👁️ View Forms & Filtering Logic</h2>
+                <p class="section-description">
+                    Access to forms is tightly controlled based on user role and department. Employees and Department
+                    Heads are restricted
+                    to their scoping department, while privileged users (Executives, Facilities Heads) can view all
+                    departments.
+                </p>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        flowchart TD
+                        Start([User accesses view_forms.php]) --> CheckRole{Check user role}
+
+                        CheckRole -->|Executive/Fac Head| Privileged[is_privileged = true]
+                        CheckRole -->|Employee/Dept Head| Restricted[is_privileged = false]
+
+                        Privileged --> AllowFilter[Allow department filter selection]
+                        AllowFilter --> GetParams[Get filter params from URL:<br />dept, status, name, control]
+
+                        Restricted --> ForceDept[Force dept_filter = $_SESSION['scoping_dept']<br />Disable dropdown]
+                        ForceDept --> GetParams
+
+                        GetParams --> BuildWhere[Build WHERE clause:<br />department = :dept<br />status =
+                        :status<br />etc.]
+
+                        BuildWhere --> CountQuery[COUNT query for pagination]
+                        CountQuery --> MainQuery[SELECT * FROM dsp_forms<br />with filters<br />ORDER BY
+                        created_date<br />OFFSET/FETCH NEXT]
+
+                        MainQuery --> RenderTable[Render table with forms]
+                        RenderTable --> Pagination[Show pagination controls]
+
+                        Pagination --> UserFilter{User changes filter?}
+                        UserFilter -->|Yes| Reload[Reload with new params]
+                        UserFilter -->|No| ViewDetails{Click View Details?}
+
+                        Reload --> GetParams
+                        ViewDetails -->|Yes| Details[Navigate to view_details.php?id=X]
+                        ViewDetails -->|No| End([Viewing Forms])
+
+                        Details --> End
+
+                        style Start fill:#dbeafe
+                        style End fill:#dcfce7
+                        style ForceDept fill:#fef3c7
+                        style Privileged fill:#d1fae5
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATABASE SCHEMA -->
+            <div class="section">
+                <h2 class="section-title">🗄️ Database Entity-Relationship Diagram</h2>
+                <p class="section-description">
+                    The system uses 2 main tables with a one-to-many relationship. Forms live in <code>dsp_forms</code>
+                    while
+                    individual disposal items are stored in <code>dsp_items</code> with a foreign key reference.
+                </p>
+
+                <div class="table-info">
+                    <h4>📊 Table: dsp_forms</h4>
+                    <ul>
+                        <li><strong>id</strong> (INT, IDENTITY, PK) - Auto-incrementing form ID used for Control Number
+                        </li>
+                        <li><strong>full_name</strong> (VARCHAR) - Name of person creating the form</li>
+                        <li><strong>department</strong> (VARCHAR) - Department from scoping_dept (standardized key)</li>
+                        <li><strong>created_date</strong> (DATETIME) - Timestamp of form creation</li>
+                        <li><strong>status</strong> (VARCHAR) - Current approval status</li>
+                        <li><strong>dept_head_approved_by</strong>, <strong>dept_head_approved_date</strong></li>
+                        <li><strong>fac_head_approved_by</strong>, <strong>fac_head_approved_date</strong></li>
+                        <li><strong>executive_approved_by</strong>, <strong>executive_approved_date</strong></li>
+                        <li><strong>final_fac_head_approved_by</strong>, <strong>final_fac_head_approved_date</strong>
+                        </li>
+                        <li><strong>rejection_reason</strong> (TEXT, NULLABLE) - Reason if rejected</li>
+                    </ul>
+                </div>
+
+                <div class="table-info">
+                    <h4>📦 Table: dsp_items</h4>
+                    <ul>
+                        <li><strong>id</strong> (INT, IDENTITY, PK) - Item record ID</li>
+                        <li><strong>form_id</strong> (INT, FK) - References dsp_forms(id)</li>
+                        <li><strong>code</strong> (VARCHAR) - Item code</li>
+                        <li><strong>description</strong> (TEXT) - Item description</li>
+                        <li><strong>serial_no</strong> (VARCHAR) - Serial number</li>
+                        <li><strong>unit_of_measure</strong> (VARCHAR) - UOM (Piece, Box, etc.)</li>
+                        <li><strong>quantity</strong> (INT) - Quantity to dispose</li>
+                        <li><strong>reason</strong> (TEXT) - Reason for disposal</li>
+                        <li><strong>image_path</strong> (VARCHAR) - Filename of uploaded image</li>
+                    </ul>
+                </div>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        erDiagram
+                        DSP_FORMS ||--o{ DSP_ITEMS : contains
+
+                        DSP_FORMS {
+                        int id PK
+                        varchar full_name
+                        varchar department
+                        datetime created_date
+                        varchar status
+                        varchar dept_head_approved_by
+                        datetime dept_head_approved_date
+                        varchar fac_head_approved_by
+                        datetime fac_head_approved_date
+                        varchar executive_approved_by
+                        datetime executive_approved_date
+                        varchar final_fac_head_approved_by
+                        datetime final_fac_head_approved_date
+                        text rejection_reason
+                        }
+
+                        DSP_ITEMS {
+                        int id PK
+                        int form_id FK
+                        varchar code
+                        text description
+                        varchar serial_no
+                        varchar unit_of_measure
+                        int quantity
+                        text reason
+                        varchar image_path
+                        }
+
+                        LRNPH_USERS ||--o{ DSP_FORMS : "creates (via session)"
+
+                        LRNPH_USERS {
+                        varchar username PK
+                        varchar password
+                        varchar empcode
+                        varchar role
+                        varchar login_token
+                        }
+
+                        LRN_MASTER_LIST ||--|| LRNPH_USERS : "provides details"
+
+                        LRN_MASTER_LIST {
+                        varchar BiometricsID PK
+                        varchar FirstName
+                        varchar LastName
+                        varchar Department
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATA FLOW SUMMARY -->
+            <div class="section">
+                <h2 class="section-title">🔄 Complete Data Flow Summary</h2>
+                <p class="section-description">
+                    This high-level diagram shows how data moves through the entire system from user action to database
+                    storage to display.
+                </p>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        flowchart LR
+                        subgraph Input["📥 Data Collection"]
+                        UI[User Interface<br />staff_entry.php]
+                        Modal[Item Modal Forms]
+                        Files[File Uploads]
+                        end
+
+                        subgraph Process["⚙️ Processing Layer"]
+                        API[submit_disposal_form.php]
+                        Auth[authenticate.php]
+                        Roles[user_roles.php]
+                        end
+
+                        subgraph Storage["💾 Data Storage"]
+                        DB1[(dsp_forms table)]
+                        DB2[(dsp_items table)]
+                        FS[File System<br />uploads/]
+                        end
+
+                        subgraph Display["📊 Data Display"]
+                        View[view_forms.php]
+                        Details[view_details.php]
+                        Dashboard[supervisor_dashboard.php]
+                        end
+
+                        subgraph Actions["🎯 User Actions"]
+                        Approve[approve_forms.php]
+                        Reject[reject_form.php]
+                        end
+
+                        UI --> Modal
+                        Modal --> Files
+                        Files --> API
+
+                        API --> DB1
+                        API --> DB2
+                        API --> FS
+
+                        Auth --> Roles
+                        Roles --> Display
+
+                        DB1 --> View
+                        DB1 --> Details
+                        DB1 --> Dashboard
+
+                        DB2 --> Details
+
+                        Dashboard --> Approve
+                        Dashboard --> Reject
+
+                        Approve --> DB1
+                        Reject --> DB1
+
+                        style Input fill:#dbeafe
+                        style Process fill:#fef3c7
+                        style Storage fill:#ede9fe
+                        style Display fill:#d1fae5
+                        style Actions fill:#fecaca
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer>
+            <p><strong>Disposal Form Management System</strong></p>
+            <p>La Rose Noire - Facilities Department</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Generated:
+                <?php echo date('F j, Y'); ?>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#f472b6',
+                primaryTextColor: '#1f2937',
+                primaryBorderColor: '#ec4899',
+                lineColor: '#6b7280',
+                secondaryColor: '#a78bfa',
+                tertiaryColor: '#fef3c7'
+            }
+        });
+    </script>
+</body>
+
+</html>

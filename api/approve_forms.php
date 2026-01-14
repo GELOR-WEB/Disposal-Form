@@ -7,12 +7,16 @@ require_once '../db/conn.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 // 1. GET USER ROLE & DETAILS
-$my_role = strtolower($_SESSION['role'] ?? '');
+$my_primary_role = strtolower($_SESSION['role'] ?? '');
+$my_roles = $_SESSION['roles'] ?? [$my_primary_role]; // Array of roles
 $my_job = strtolower($_SESSION['job_level'] ?? '');
 $my_dept = $_SESSION['department'] ?? '';
 $approver_id = $_SESSION['user_id'] ?? $_SESSION['username'] ?? 'Unknown';
 
-$full_role_string = $my_role . ' ' . $my_job;
+// Create a combined string of all roles for easier searching (or iterate array)
+// Convert all roles to lowercase
+$my_roles_lower = array_map('strtolower', $my_roles);
+$full_role_string = implode(' ', $my_roles_lower) . ' ' . $my_job;
 
 // Define specific booleans
 // NOTE: "Admin" roles are now treated as "Facilities Head" for the workflow

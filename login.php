@@ -170,6 +170,11 @@
 
                 <!-- Footer -->
                 <div class="pt-8 border-t border-gray-200/50 text-center">
+                    <a href="documentation.html" target="_blank"
+                        class="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all shadow-sm hover:shadow-md">
+                        <i class="fas fa-book-open"></i>
+                        View System Documentation
+                    </a>
                     <p class="text-gray-500 text-sm flex items-center justify-center gap-2">
                         <i class="fas fa-shield-alt text-green-500"></i>
                         Secure access to your workspace

@@ -79,13 +79,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['department'] = $row['Department'];
 
                 // Load User Roles Configuration
-                $user_roles = include __DIR__ . '/user_roles.php';
+                $config = include __DIR__ . '/user_roles.php';
+                $user_roles = $config['user_map'];
+                $department_groups = $config['department_groups'];
 
                 // Check if user exists in the configuration
                 if (array_key_exists($username, $user_roles)) {
-                    $_SESSION['role'] = $user_roles[$username];
+                    $roles = $user_roles[$username];
+                    $_SESSION['roles'] = $roles; // Store full array of roles
 
-                    // Redirect based on role
+                    // Determine Scoping Department (The "Respective Department")
+                    // Iterate through groups to find which one contains this user
+                    $scoping_dept = '';
+                    foreach ($department_groups as $dept_name => $group) {
+                        $all_in_group = array_merge($group['employees'] ?? [], $group['heads'] ?? []);
+                        // Values in config are strings, ensures type match
+                        if (in_array((string) $username, $all_in_group)) {
+                            $scoping_dept = $dept_name;
+                            break;
+                        }
+                    }
+                    $_SESSION['scoping_dept'] = $scoping_dept;
+
+                    // Determine Primary Role for Hierarchy (Exec > Admin > FacHead > DeptHead > Emp)
+                    // This maintains backward compatibility for simple checks, while 'roles' array allows multi-role logic
+                    if (in_array('Executive', $roles)) {
+                        $_SESSION['role'] = 'Executive';
+                    } elseif (in_array('Admin', $roles)) { // Admin isn't explicitly in user_roles keys but checking just in case
+                        $_SESSION['role'] = 'Admin';
+                    } elseif (in_array('Facilities Head', $roles)) {
+                        $_SESSION['role'] = 'Facilities Head';
+                    } elseif (in_array('Department Head', $roles)) {
+                        $_SESSION['role'] = 'Department Head';
+                    } else {
+                        $_SESSION['role'] = 'Employee';
+                    }
+
+                    // Redirect based on roles
+                    // If they have ANY role above Employee, go to view_forms (approver view)
+                    // Only pure Employees go to dashboard
+                    // Actually, let's stick to the primary role logic for redirect as it aligns with the 'highest' authority
                     if ($_SESSION['role'] === 'Employee') {
                         header("Location: ../pages/dashboard.php");
                     } else {

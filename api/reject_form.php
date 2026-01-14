@@ -7,10 +7,16 @@ require_once '../db/conn.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 // 1. ROBUST SECURITY CHECK
-$my_role = strtolower($_SESSION['role'] ?? '');
+// 1. ROBUST SECURITY CHECK
+$my_primary_role = strtolower($_SESSION['role'] ?? '');
+$my_roles = $_SESSION['roles'] ?? [$my_primary_role]; // Array of roles
 $my_job = strtolower($_SESSION['job_level'] ?? '');
 $my_dept = $_SESSION['department'] ?? '';
-$full_role_string = $my_role . ' ' . $my_job;
+
+// Create a combined string of all roles for easier searching (or iterate array)
+// Convert all roles to lowercase
+$my_roles_lower = array_map('strtolower', $my_roles);
+$full_role_string = implode(' ', $my_roles_lower) . ' ' . $my_job;
 
 $is_fac_head = (strpos($full_role_string, 'admin') !== false || strpos($full_role_string, 'facilities head') !== false);
 $is_dept_head = (strpos($full_role_string, 'department head') !== false);
