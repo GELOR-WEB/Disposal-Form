@@ -1,73 +1,271 @@
 <style>
-    /* Sidebar responsive styles */
+    /* Sidebar responsive styles - Modern fluid design */
     #app-sidebar {
-        overflow-y: auto;
+        /* Disable scrolling for cleaner mobile/tablet experience */
+        overflow-y: hidden;
+        /* Disable horizontal scrolling */
+        overflow-x: hidden;
+        /* Ensure it takes full viewport height */
+        max-height: 100vh;
+        height: 100vh;
+        /* FORCE FIXED POSITIONING ON ALL DEVICES */
+        position: fixed !important;
+        /* Ensure it stays on top */
+        z-index: 50;
     }
 
-    /* Prevent scrolling on tablets and larger screens */
-    @media (min-width: 769px) {
-        #app-sidebar {
-            overflow-y: hidden;
-        }
-    }
-
-    /* For very small tablets in portrait, keep scrolling */
-    @media (max-width: 768px) {
-        #app-sidebar {
-            overflow-y: auto;
-        }
-    }
-
-    /* Footer image display rules */
+    /* Footer image display rules - Fluid visibility */
     #sidebar-footer {
+        /* Hide footer on mobile to save space */
         display: none;
+        margin-top: clamp(0px, 1vw, 1rem);
+        height: auto;
     }
 
-    /* Show footer on tablets in landscape orientation */
-    @media (min-width: 769px) and (orientation: landscape) {
-        #sidebar-footer {
-            margin-top: 0px !important;
-            display: block;
-            /* Note: height: 100vh; on the container might be too tall, but I left it as is per your config */
-            height: 100vh;
-        }
-
-        /* UPDATED: Apply the 10vh height ONLY here */
-        #sidebar-footer img {
-            height: 10vh;
-            object-fit: cover;
-            /* Ensures image doesn't look squashed */
-        }
+    /* Show footer on larger viewports (tablets landscape and desktop) */
+    #sidebar-footer {
+        display: block;
     }
 
-    /* Show footer on desktop (always landscape) */
-    @media (min-width: 1441px) {
-        #sidebar-footer {
-            display: block;
-            margin-top: 1.5rem;
-            /* Restore margin for desktop if needed */
-            height: auto;
-            /* Reset container height for desktop */
-        }
-
-        /* UPDATED: Let desktop height be natural (auto) */
-        #sidebar-footer img {
-            height: auto;
-            max-height: 120px;
-            /* Optional: Prevents it from getting too huge on big screens */
-        }
+    /* Fluid image sizing - more compact */
+    #sidebar-footer img {
+        height: clamp(auto, 8vh, 100px);
+        max-height: 100px;
+        object-fit: cover;
     }
 
-    /* Minimize buttons on tablets */
-    @media (min-width: 769px) and (max-width: 1440px) {
+    /* Navigation buttons - Compact fluid sizing for tablets/phones */
+    .nav-item {
+        padding: clamp(0.4rem, 0.5rem + 0.25vw, 0.75rem) clamp(0.6rem, 0.75rem + 0.25vw, 1rem) !important;
+        font-size: clamp(0.8rem, 0.85rem + 0.05vw, 0.9rem) !important;
+        gap: clamp(0.4rem, 0.5vw, 0.6rem) !important;
+    }
+
+    .nav-item i {
+        font-size: clamp(0.8rem, 0.85rem + 0.05vw, 0.9rem);
+    }
+
+    /* =========================================
+       1. MOBILE PORTRAIT (Phones) - Bottom Navigation
+       ========================================= */
+    @media only screen and (max-width: 640px) and (orientation: portrait) {
+        #app-sidebar {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 4rem !important;
+            bottom: 0 !important;
+            top: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            padding: 0 !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px 20px 0 0 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            z-index: 9999 !important;
+            overflow-y: hidden !important;
+        }
+
+        /* Hide elements */
+        .mb-8,
+        #sidebar-footer,
+        .text-left,
+        .nav-item span,
+        .glass-panel.p-4 {
+            display: none !important;
+        }
+
+        /* FORCE HORIZONTAL LAYOUT on the NAV wrapper */
+        #app-sidebar nav {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-around !important;
+            width: 100% !important;
+            flex: 1 !important;
+            margin: 0 !important;
+        }
+
+        /* Reset vertical spacing */
+        #app-sidebar nav>* {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Hide Divider */
+        #app-sidebar nav hr {
+            display: none !important;
+        }
+
+        /* Nav Items */
         .nav-item {
-            padding: 0.5rem 0.75rem !important;
-            font-size: 0.875rem !important;
-            gap: 0.5rem !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0.75rem !important;
+            width: auto !important;
+            background: transparent !important;
+            box-shadow: none !important;
         }
 
         .nav-item i {
-            font-size: 0.875rem;
+            margin: 0 !important;
+            font-size: 1.5rem !important;
+            color: #db2777 !important;
+        }
+
+        /* Logout Icon integration */
+        #app-sidebar>a[href*="logout"] {
+            margin: 0 !important;
+            padding: 0.75rem !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        #app-sidebar>a[href*="logout"] span {
+            display: none !important;
+        }
+
+        #app-sidebar>a[href*="logout"] i {
+            font-size: 1.5rem !important;
+            color: #ef4444 !important;
+        }
+    }
+
+    /* =========================================
+       2. MOBILE LANDSCAPE (Phones rotated)
+       ========================================= */
+    /* =========================================
+       2. MOBILE LANDSCAPE (Phones rotated) - Bottom Navigation
+       ========================================= */
+    @media only screen and (max-width: 932px) and (orientation: landscape) {
+        #app-sidebar {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 3rem !important;
+            /* Slightly more compact */
+            bottom: 0 !important;
+            top: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            padding: 0 !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px 15px 0 0 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            z-index: 9999 !important;
+            overflow-y: hidden !important;
+        }
+
+        /* Hide elements */
+        .mb-8,
+        #sidebar-footer,
+        .text-left,
+        .nav-item span,
+        .glass-panel.p-4 {
+            display: none !important;
+        }
+
+        /* FORCE HORIZONTAL LAYOUT on the NAV wrapper */
+        #app-sidebar nav {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-around !important;
+            width: 100% !important;
+            flex: 1 !important;
+            margin: 0 !important;
+        }
+
+        #app-sidebar nav>* {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        #app-sidebar nav hr {
+            display: none !important;
+        }
+
+        /* Nav Items */
+        .nav-item {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0.25rem !important;
+            width: auto !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .nav-item i {
+            margin: 0 !important;
+            font-size: 1.25rem !important;
+            color: #db2777 !important;
+        }
+
+        /* Logout Icon integration */
+        #app-sidebar>a[href*="logout"] {
+            margin: 0 !important;
+            padding: 0.5rem !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        #app-sidebar>a[href*="logout"] span {
+            display: none !important;
+        }
+
+        #app-sidebar>a[href*="logout"] i {
+            font-size: 1.25rem !important;
+            color: #ef4444 !important;
+        }
+    }
+
+    /* =========================================
+       3. TABLET PORTRAIT (iPad, High-Res 2136px width)
+       ========================================= */
+    @media only screen and (min-width: 768px) and (max-width: 2136px) and (orientation: portrait) {
+        #app-sidebar {
+            width: 14rem !important;
+            /* Compact but text visible */
+            padding: 1.5rem 1rem !important;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        .mb-8 {
+            padding-left: 0.5rem !important;
+        }
+
+        /* Keep text visible but smaller */
+        h2.text-lg {
+            font-size: 1rem !important;
+        }
+
+        .text-xs {
+            font-size: 0.7rem !important;
+        }
+    }
+
+    /* =========================================
+       4. TABLET LANDSCAPE (High-Res 3200px width)
+       ========================================= */
+    @media only screen and (min-width: 768px) and (max-width: 3200px) and (orientation: landscape) {
+        #app-sidebar {
+            width: 16rem !important;
+            /* Full width */
+            padding: 1.5rem !important;
         }
     }
 </style>
@@ -211,7 +409,7 @@
 
         <hr class="border-gray-200 my-2">
 
-        <a href="/portal-lrn/portal.php"
+        <a href="../portal-lrn-folder/portal.php"
             class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-600 rounded-xl transition-all hover:bg-pink-50">
             <i class="fas fa-door-open"></i>
             <span>Return to Portal</span>

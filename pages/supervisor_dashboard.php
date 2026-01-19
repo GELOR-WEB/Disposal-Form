@@ -16,7 +16,8 @@ if (!isset($_SESSION['username'])) {
 // 2. ROBUST SECURITY CHECK
 $my_role = strtolower($_SESSION['role'] ?? '');
 $my_job = strtolower($_SESSION['job_level'] ?? '');
-$my_dept = $_SESSION['department'] ?? ''; // Added department check
+// Use scoping_dept to match the value used when creating forms
+$my_dept = $_SESSION['scoping_dept'] ?? $_SESSION['department'] ?? '';
 $full_role_string = $my_role . ' ' . $my_job;
 
 $is_admin = (strpos($full_role_string, 'admin') !== false || strpos($full_role_string, 'facilities head') !== false); // Acts as Fac Head

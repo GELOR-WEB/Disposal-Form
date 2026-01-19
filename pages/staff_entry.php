@@ -80,17 +80,92 @@ try {
             padding-right: 20px;
         }
 
-        @media (max-width: 768px) {
+        /* MOBILE PORTRAIT (Bottom Nav) */
+        @media only screen and (max-width: 640px) and (orientation: portrait) {
             body {
                 padding-left: 20px !important;
+                padding-right: 20px !important;
+                padding-bottom: 8rem !important;
+            }
+
+            .table {
+                display: block !important;
+                overflow-x: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table table {
+                min-width: 800px !important;
+            }
+
+            .header-grid {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            .header-info-box {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .submit-container {
+                right: 1.5rem !important;
+                left: auto !important;
+                margin: 0 !important;
+                margin-top: 10% !important;
+                padding: 0 !important;
+                z-index: 50 !important;
+                width: auto !important;
+            }
+
+            .submit-container button {
+                padding: 12px 25px !important;
+                font-size: 1rem !important;
+                box-shadow: 0 4px 15px rgba(167, 139, 250, 0.4) !important;
             }
         }
 
-        @media (min-width: 769px) and (max-width: 1024px) {
+        /* MOBILE LANDSCAPE (Bottom Nav) */
+        @media only screen and (max-width: 932px) and (orientation: landscape) {
             body {
-                padding-left: 240px !important;
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+                padding-bottom: 5rem !important;
+            }
+
+            .table {
+                display: block !important;
+                overflow-x: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table table {
+                min-width: 800px !important;
             }
         }
+
+        /* 3. TABLET PORTRAIT (High-Res 2136px) */
+        @media only screen and (min-width: 768px) and (max-width: 2136px) and (orientation: portrait) {
+            body {
+                padding-left: 15rem !important;
+                padding-right: 20px !important;
+            }
+        }
+
+        /* 4. TABLET LANDSCAPE (High-Res 3200px) */
+        @media only screen and (min-width: 768px) and (max-width: 3200px) and (orientation: landscape) {
+            body {
+                padding-left: 17rem !important;
+            }
+        }
+
 
         .header-grid {
             display: grid;
@@ -143,6 +218,22 @@ try {
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(5px);
+        }
+
+        .add-item-container {
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+        }
+
+        /* Tablet Responsive for Add Item Container */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .add-item-container {
+                width: 100%;
+                justify-content: center;
+                align-items: center;
+            }
         }
     </style>
 </head>
@@ -222,16 +313,17 @@ try {
                 </table>
             </div>
 
-            <div style="margin-top: auto; display: flex; justify-content: center; padding-top: 20px;">
+            <div class="add-item-container">
                 <button type="button" class="btn-primary" onclick="openModal(false)">
                     <i class="fas fa-plus"></i> Add Item
                 </button>
             </div>
         </div>
 
-        <div style="margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 40px;">
+        <div class="submit-container"
+            style="margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 40px;">
             <button type="button" onclick="submitForm()" class="btn-primary"
-                style="background: var(--gradient-secondary); padding: 15px 40px; font-size: 1.1rem;">
+                style="background: var(--gradient-secondary); padding: 15px 40px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(167, 139, 250, 0.4);">
                 <i class="fas fa-paper-plane"></i> Submit Form
             </button>
         </div>

@@ -116,14 +116,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
 
                     // Redirect based on roles
-                    // If they have ANY role above Employee, go to view_forms (approver view)
+                    // If they have ANY role above Employee, go to supervisor_dashboard (approver view)
                     // Only pure Employees go to dashboard
-                    // Actually, let's stick to the primary role logic for redirect as it aligns with the 'highest' authority
                     if ($_SESSION['role'] === 'Employee') {
                         header("Location: ../pages/dashboard.php");
                     } else {
-                        // All other roles (Department Head, Facilities Head, Executive) go to view_forms
-                        header("Location: ../pages/view_forms.php");
+                        // All other roles (Department Head, Facilities Head, Executive) go to supervisor_dashboard for approvals
+                        header("Location: ../pages/supervisor_dashboard.php");
                     }
                     exit();
                 } else {

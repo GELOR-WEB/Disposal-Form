@@ -1,0 +1,116 @@
+/* Modern Fluid Responsive Design System */
+/* Uses clamp(), viewport units, and CSS Grid for seamless responsiveness */
+
+/* Typography - Fluid sizing across all devices */
+body {
+    font-size: clamp(14px, 0.875rem + 0.25vw, 18px);
+}
+
+h1 {
+    font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2.5rem) !important;
+}
+
+h2 {
+    font-size: clamp(1.25rem, 1.125rem + 0.875vw, 2rem) !important;
+}
+
+h3 {
+    font-size: clamp(1.125rem, 1rem + 0.625vw, 1.5rem);
+}
+
+/* Sidebar - Fluid width with mobile hide */
+.glass-sidebar {
+    width: clamp(220px, 18vw, 320px);
+    transform: translateX(0);
+    transition: transform 0.3s ease, width 0.3s ease;
+    z-index: 100;
+}
+
+/* Mobile sidebar toggle (no media query needed) */
+.body-mobile-view .glass-sidebar {
+    transform: translateX(-100%);
+}
+
+.body-mobile-view .glass-sidebar.active {
+    transform: translateX(0);
+}
+
+/* Responsive margin for main content */
+.ml-64 {
+    margin-left: clamp(0px, 18vw, 320px);
+}
+
+/* Cards & Panels - Fluid margins */
+.glass-panel {
+    margin: clamp(8px, 1vw, 16px);
+    border-radius: clamp(16px, 1.25rem, 24px);
+}
+
+.card {
+    margin: clamp(4px, 0.5vw, 12px);
+}
+
+/* Buttons - Responsive sizing */
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-secondary {
+    padding: clamp(10px, 0.75rem + 0.5vw, 18px) clamp(20px, 1.5rem + 1vw, 32px);
+    font-size: clamp(13px, 0.875rem + 0.125vw, 16px);
+    width: auto;
+    min-width: clamp(80px, 10vw, 120px);
+}
+
+/* Mobile: Full-width buttons on small viewports */
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-secondary {
+    width: min(100%, max(120px, 20vw));
+}
+
+/* Tables - Fluid sizing */
+.table {
+    font-size: clamp(12px, 0.8125rem + 0.125vw, 15px);
+}
+
+.table th,
+.table td {
+    padding: clamp(12px, 0.875rem + 0.5vw, 20px) clamp(8px, 0.75rem + 0.5vw, 22px);
+    font-size: clamp(12px, 0.8125rem + 0.125vw, 16px);
+}
+
+/* Form Inputs - Fluid sizing */
+.form-input {
+    padding: clamp(14px, 1rem + 0.25vw, 22px) clamp(18px, 1.25rem + 0.5vw, 24px);
+    font-size: clamp(13px, 0.875rem + 0.125vw, 16px);
+}
+
+/* Responsive Table Wrapper */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    min-width: min(100%, 600px);
+}
+
+/* Touch-friendly elements - Uses interaction media feature */
+@media (hover: none) and (pointer: coarse) {
+
+    .btn-primary,
+    .btn-success,
+    .btn-danger,
+    .btn-secondary,
+    .nav-item {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .form-input,
+    select.form-input {
+        min-height: 44px;
+    }
+}

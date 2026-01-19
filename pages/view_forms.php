@@ -284,7 +284,7 @@ try {
             background-image: linear-gradient(to bottom, #ec4899, #be185d);
         }
 
-        /* Tablet responsive adjustments */
+        /* Tablet responsive adjustments (Landscape) */
         @media (min-width: 769px) and (max-width: 1440px) {
 
             /* Minimize filter inputs */
@@ -309,6 +309,240 @@ try {
             /* Adjust card margin to prevent pagination cutoff */
             .card {
                 margin-bottom: 5rem !important;
+            }
+        }
+
+        /* Portrait Tablet Responsive (768px - 1024px in portrait orientation) */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            body {
+                padding-left: 240px !important;
+                padding-right: 15px !important;
+                padding-top: 15px !important;
+            }
+
+            /* Header adjustments */
+            .glass-panel h1 {
+                font-size: 1.5rem !important;
+            }
+
+            .glass-panel p {
+                font-size: 0.875rem !important;
+            }
+
+            /* Filter bar - stack in pairs */
+            .mb-4.flex {
+                gap: 0.5rem !important;
+            }
+
+            .form-input {
+                padding: 0.5rem 0.65rem !important;
+                font-size: 0.8rem !important;
+                width: calc(50% - 0.25rem) !important;
+                min-width: 120px !important;
+            }
+
+            #controlNoSearch {
+                width: calc(50% - 0.25rem) !important;
+                padding-left: 28px !important;
+            }
+
+            #deptFilter,
+            #nameSearch,
+            #statusFilter {
+                width: calc(50% - 0.25rem) !important;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.8rem !important;
+            }
+
+            /* Table adjustments */
+            table {
+                font-size: 0.75rem !important;
+            }
+
+            table th {
+                padding: 0.5rem 0.35rem !important;
+                font-size: 0.65rem !important;
+            }
+
+            table td {
+                padding: 0.5rem 0.35rem !important;
+                font-size: 0.75rem !important;
+            }
+
+            .status-badge {
+                padding: 4px 8px !important;
+                font-size: 0.65rem !important;
+                min-width: 90px !important;
+            }
+
+            /* Pagination adjustments */
+            .py-4.flex.justify-center {
+                padding: 0.75rem 0.5rem !important;
+            }
+
+            .h-8 {
+                height: 32px !important;
+            }
+
+            .w-8 {
+                width: 32px !important;
+            }
+
+            /* Card spacing */
+            .card {
+                margin-bottom: 4rem !important;
+            }
+        }
+
+        /* Phone Portrait Responsive (max-width: 767px) */
+        @media (max-width: 767px) {
+            body {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                padding-top: 10px !important;
+            }
+
+            /* Header - more compact */
+            .glass-panel {
+                padding: 1rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            .glass-panel h1 {
+                font-size: 1.25rem !important;
+                margin: 0 !important;
+            }
+
+            .glass-panel p {
+                font-size: 0.75rem !important;
+                margin: 0 !important;
+            }
+
+            /* HORIZONTAL SCROLLABLE FILTERS (Carousel) */
+            .mb-4.flex.flex-wrap.gap-4 {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                gap: 10px !important;
+                margin-bottom: 15px !important;
+                padding-bottom: 5px !important;
+                /* Space for scrollbar interaction */
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                /* Firefox */
+            }
+
+            .mb-4.flex.flex-wrap.gap-4::-webkit-scrollbar {
+                display: none;
+                /* Chrome/Safari - hide scrollbar for clean look */
+            }
+
+            /* Set fixed widths for direct children to prevent squishing */
+            .mb-4.flex.flex-wrap.gap-4>* {
+                flex: 0 0 auto !important;
+            }
+
+            /* 1. Control Search */
+            .mb-4.flex.flex-wrap.gap-4>div:first-child {
+                width: 200px !important;
+                grid-column: auto !important;
+                /* Reset grid */
+            }
+
+            #controlNoSearch {
+                width: 100% !important;
+                padding: 0.5rem 0.75rem 0.5rem 2rem !important;
+                height: 40px !important;
+                background: white !important;
+                border-radius: 12px !important;
+                /* Match rounded look */
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .mb-4.flex>div:first-child i {
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+            }
+
+            /* 2. Date Toggle */
+            #sortDateToggle {
+                width: auto !important;
+                min-width: 80px !important;
+                height: 40px !important;
+                padding: 0 15px !important;
+                display: flex !important;
+                align-items: center !important;
+                grid-column: auto !important;
+                background: white !important;
+                border-radius: 12px !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* 3. Inputs & Selects */
+            #deptFilter,
+            #nameSearch,
+            #statusFilter {
+                width: 160px !important;
+                /* Consistent width */
+                height: 40px !important;
+                min-height: 40px !important;
+                padding: 0 0.75rem !important;
+                font-size: 0.85rem !important;
+                border-radius: 12px !important;
+                grid-column: auto !important;
+                display: block !important;
+                /* Ensure visible */
+                background: white !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            /* Table container */
+            .table-container {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                margin-top: 0.5rem !important;
+            }
+
+            /* Table Compactness */
+            table {
+                min-width: 600px !important;
+                font-size: 0.7rem !important;
+            }
+
+            table th,
+            table td {
+                padding: 0.5rem 0.25rem !important;
+            }
+
+            /* Status Badges */
+            .status-badge {
+                padding: 2px 6px !important;
+                font-size: 0.6rem !important;
+                min-width: 60px !important;
+            }
+
+            /* Card spacing */
+            .card {
+                margin-bottom: 5rem !important;
+                /* Space for bottom nav */
+                padding: 1rem !important;
+                border-radius: 16px !important;
+            }
+
+            /* Pagination */
+            .py-4.flex.justify-center {
+                padding: 0.5rem !important;
+                flex-wrap: wrap;
+            }
+
+            /* Fix body height for mobile browser chrome */
+            .h-\[calc\(100vh-40px\)\] {
+                height: auto !important;
+                min-height: 100vh !important;
             }
         }
     </style>
@@ -372,7 +606,7 @@ try {
         <div
             class="card p-0 flex-1 flex flex-col min-h-0 overflow-hidden shadow-lg border border-gray-100 bg-white rounded-2xl mb-4">
 
-            <div class="w-full">
+            <div class="table-container">
                 <table class="w-full" style="border-collapse: collapse; min-width: 800px;">
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
@@ -390,11 +624,6 @@ try {
                             </th>
                         </tr>
                     </thead>
-                </table>
-            </div>
-
-            <div class="table-container">
-                <table class="w-full" style="border-collapse: collapse; min-width: 800px;">
                     <tbody class="divide-y divide-gray-50">
                         <?php if (count($forms) > 0): ?>
                             <?php foreach ($forms as $form): ?>

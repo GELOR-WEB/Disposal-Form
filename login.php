@@ -31,6 +31,175 @@
             }
         }
     </script>
+    <style>
+        /* Mobile Portrait Tweaks */
+        @media (max-width: 640px) {
+            body {
+                height: 100vh !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+            }
+
+            .glass-panel {
+                border-radius: 20px !important;
+                width: 90% !important;
+                max-height: 100vh !important;
+                margin: 0 !important;
+                margin-top: 15% !important;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+                position: relative;
+                z-index: 50;
+            }
+
+            .left-panel {
+                padding: 1rem !important;
+                flex: 0 0 auto;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .right-panel {
+                padding: 1.5rem 1rem !important;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                overflow-y: auto;
+            }
+
+            .brand-title {
+                font-size: 1.25rem !important;
+            }
+
+            .brand-subtitle {
+                font-size: 0.7rem !important;
+            }
+
+            .logo-container {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            .logo-icon {
+                font-size: 1.25rem !important;
+            }
+
+            h2 {
+                font-size: 1.25rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            input.form-input {
+                padding: 0.75rem 2.5rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .space-y-6>*+* {
+                margin-top: 0.75rem !important;
+            }
+
+            .space-y-8>*+* {
+                margin-top: 0.5rem !important;
+            }
+
+            .space-y-3>*+* {
+                margin-top: 0.25rem !important;
+            }
+
+            .absolute.left-4,
+            .absolute.right-4 {
+                width: 1rem !important;
+                height: 1rem !important;
+            }
+
+            .absolute.left-4 {
+                left: 1rem !important;
+            }
+
+            .absolute.right-4 {
+                right: 1rem !important;
+            }
+
+            p.text-gray-500 {
+                font-size: 0.8rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+        }
+
+        /* Mobile Landscape Tweaks */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                height: 100vh !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+            }
+
+            .glass-panel {
+                flex-direction: row !important;
+                height: auto !important;
+                max-height: 85vh !important;
+                width: 80% !important;
+                height: 60% !important;
+                max-width: 700px !important;
+                border-radius: 20px !important;
+                margin: 0 !important;
+                margin-top: 45px !important;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            }
+
+            .left-panel {
+                width: 40% !important;
+                padding: 1rem !important;
+                justify-content: center;
+                border-right: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .right-panel {
+                width: 60% !important;
+                padding: 1rem 2rem !important;
+                overflow-y: auto;
+                justify-content: center;
+            }
+
+            .brand-title {
+                font-size: 1.5rem !important;
+            }
+
+            .logo-container {
+                width: 3rem !important;
+                height: 3rem !important;
+            }
+
+            .logo-icon {
+                font-size: 1.5rem !important;
+            }
+
+            h2 {
+                font-size: 1.5rem !important;
+            }
+
+            .form-input {
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+            }
+
+            .space-y-6>*+* {
+                margin-top: 0.5rem !important;
+            }
+
+            .space-y-8>*+* {
+                margin-top: 0.5rem !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -54,24 +223,24 @@
 
         <!-- Left Panel - Brand -->
         <div
-            class="w-full md:w-5/12 bg-gradient-to-br from-pink-400 via-pink-300 to-purple-300 p-12 text-white flex flex-col justify-center items-center relative overflow-hidden">
+            class="left-panel w-full md:w-5/12 bg-gradient-to-br from-pink-400 via-pink-300 to-purple-300 p-12 text-white flex flex-col justify-center items-center relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
             <div class="absolute inset-0 backdrop-blur-[1px]"></div>
 
             <div class="relative z-10 text-center space-y-6">
                 <!-- Logo/Icon -->
                 <div
-                    class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto animate-pulse-glow shadow-2xl">
-                    <i class="fas fa-spa text-5xl text-white drop-shadow-lg"></i>
+                    class="logo-container w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto animate-pulse-glow shadow-2xl">
+                    <i class="logo-icon fas fa-spa text-5xl text-white drop-shadow-lg"></i>
                 </div>
 
                 <!-- Brand Name -->
                 <div class="space-y-2">
                     <h1
-                        class="text-5xl font-black tracking-wide bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent drop-shadow-sm">
+                        class="brand-title text-5xl font-black tracking-wide bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent drop-shadow-sm">
                         La Rose Noire
                     </h1>
-                    <p class="text-pink-50 text-xl font-medium leading-relaxed">
+                    <p class="brand-subtitle text-pink-50 text-xl font-medium leading-relaxed">
                         Facilities Management Department
                     </p>
                 </div>
@@ -96,7 +265,7 @@
         </div>
 
         <!-- Right Panel - Login Form -->
-        <div class="w-full md:w-7/12 p-12 bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-xl">
+        <div class="right-panel w-full md:w-7/12 p-12 bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-xl">
             <div class="space-y-8">
                 <!-- Header -->
                 <div class="text-center space-y-3">
@@ -170,11 +339,6 @@
 
                 <!-- Footer -->
                 <div class="pt-8 border-t border-gray-200/50 text-center">
-                    <a href="documentation.html" target="_blank"
-                        class="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all shadow-sm hover:shadow-md">
-                        <i class="fas fa-book-open"></i>
-                        View System Documentation
-                    </a>
                     <p class="text-gray-500 text-sm flex items-center justify-center gap-2">
                         <i class="fas fa-shield-alt text-green-500"></i>
                         Secure access to your workspace
